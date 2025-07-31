@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Классические слоты | ЯжНаДэп</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;600;700&display=swap');
+
+        :root {
+            --primary: #6d28d9;
+            --secondary: #06b6d4;
+            --accent: #f59e0b;
+            --dark: #0f172a;
+            --darker: #020617;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--darker);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .neon-box {
+            box-shadow: 0 0 10px rgba(110, 40, 217, 0.5),
+                       inset 0 0 5px rgba(110, 40, 217, 0.3);
+        }
+
+        .slot-machine {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(15, 23, 42, 0.7);
+            border-radius: 15px;
+            border: 1px solid rgba(109, 40, 217, 0.5);
+            flex-wrap: wrap;
+        }
+
+        .reel-container {
+            width: 70px;
+            height: 210px;
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            box-shadow:
+                inset 0 0 15px rgba(0, 0, 0, 0.5),
+                0 0 10px rgba(109, 40, 217, 0.3);
+            border: 2px solid rgba(109, 40, 217, 0.3);
+        }
+
+        .reel-strip {
+            position: absolute;
+            width: 100%;
+        }
+
+        .symbol {
+            width: 70px;
+            height: 70px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 36px;
+            background: rgba(255, 255, 255, 0.9);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+        }
+
+        .reel-shadow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.7);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .reel-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                rgba(0, 0, 0, 0.8) 0%,
+                transparent 20%,
+                transparent 80%,
+                rgba(0, 0, 0, 0.8) 100%
+            );
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .winning-reel {
+            animation: pulse 0.5s infinite alternate, glow 0.5s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.05); }
+        }
+
+        @keyframes glow {
+            0% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+            100% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.9); }
+        }
+
+        .balance-display {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(109, 40, 217, 0.5);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+
+        .bet-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 15px 0;
+            align-items: center;
+        }
+
+        .bet-input {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(109, 40, 217, 0.5);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            width: 80px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .bet-input:focus {
+            outline: none;
+            border-color: rgba(109, 40, 217, 0.8);
+            box-shadow: 0 0 0 2px rgba(109, 40, 217, 0.3);
+        }
+
+        .bet-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(109, 40, 217, 0.3);
+            color: white;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .bet-btn:hover {
+            background: rgba(109, 40, 217, 0.5);
+            transform: scale(1.1);
+        }
+
+        .win-message {
+            color: #10b981;
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+            height: 30px;
+            margin: 15px 0;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        @media (max-width: 767px) {
+            .reel-container {
+                width: 50px;
+                height: 150px;
+            }
+            .symbol {
+                width: 50px;
+                height: 50px;
+                font-size: 24px;
+            }
+            .slot-machine {
+                gap: 5px;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Инициализация Firebase -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCDBRYFbAZzsc5K95dJQeRVSlyUeS0x2yg",
+            authDomain: "kazinaks.firebaseapp.com",
+            databaseURL: "https://kazinaks-default-rtdb.firebaseio.com",
+            projectId: "kazinaks",
+            storageBucket: "kazinaks.appspot.com",
+            messagingSenderId: "923668859204",
+            appId: "1:923668859204:web:3696ac595e106b6f226f11",
+            measurementId: "G-7CYFK7BGL0"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+    </script>
+
+    <!-- Header -->
+    <header class="bg-gradient-to-b from-violet-900/30 to-transparent backdrop-blur-sm fixed w-full z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <!-- Logo -->
+            <div class="flex items-center space-x-2">
+                <div class="text-3xl md:text-4xl text-yellow-400">
+                    <i class="fas fa-dragon"></i>
+                </div>
+                <h1 class="font-orbitron text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 bg-clip-text text-transparent">
+                    ЯжНаДэп
+                </h1>
+            </div>
+
+            <!-- User Section -->
+            <div id="userSection" class="hidden md:flex items-center space-x-4">
+                <div class="balance-display">
+                    <i class="fas fa-coins text-yellow-400"></i>
+                    <span class="balance-amount" id="userBalance">0</span>
+                </div>
+                <button onclick="window.location.href='nas.html'" class="px-4 py-2 rounded-full bg-gray-700 hover:bg-gray-600 text-white font-semibold transition">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <button id="mobileMenuButton" class="md:hidden text-white text-2xl">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="pt-16 md:pt-20 pb-10">
+        <div class="container mx-auto px-4 max-w-6xl">
+            <!-- Back Button -->
+            <button onclick="window.location.href='index.html'" class="mb-6 px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 to-blue-500 text-white font-semibold neon-button flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i> Назад
+            </button>
+
+            <!-- Game Title -->
+            <div class="text-center mb-8">
+                <h2 class="text-2xl md:text-4xl font-bold mb-2 font-orbitron text-purple-400 neon-text">
+                    <i class="fas fa-gem mr-2"></i> Классические слоты
+                </h2>
+                <p class="text-gray-400">Крутите барабаны и выигрывайте джекпоты!</p>
+            </div>
+
+            <!-- Balance -->
+            <div class="flex justify-center mb-6">
+                <div class="balance-display px-6 py-3">
+                    <i class="fas fa-coins text-yellow-400 mr-2"></i>
+                    Баланс: <span id="balance" class="balance-amount">0</span>
+                </div>
+            </div>
+
+            <!-- Bet Controls -->
+            <div class="bet-controls">
+                <button id="betDown" class="bet-btn">-</button>
+                <div class="flex flex-col items-center">
+                    <div class="text-sm text-gray-400 mb-1">Ставка</div>
+                    <input type="number" id="betInput" class="bet-input" value="10" min="10" max="1000000">
+                </div>
+                <button id="betUp" class="bet-btn">+</button>
+            </div>
+
+            <!-- Slot Machine -->
+            <div class="slot-machine neon-box" id="slotMachine">
+                <!-- Reels will be added dynamically -->
+            </div>
+
+            <!-- Win Message -->
+            <div class="win-message" id="winMessage"></div>
+
+            <!-- Controls -->
+            <div class="flex justify-center mt-6">
+                <button id="spinButton" class="px-8 py-3 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold text-lg neon-button">
+                    Крутить (<span id="betAmountDisplay">1</span> кредит)
+                </button>
+            </div>
+
+            <!-- Paytable -->
+            <div class="mt-10 bg-gray-900/50 p-4 rounded-lg border border-purple-500/30">
+                <h3 class="text-xl font-bold text-center mb-4 text-purple-300">Таблица выплат</h3>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div class="bg-gray-800/50 p-3 rounded border border-yellow-500/20">
+                        <div class="flex justify-center text-2xl mb-2">7️⃣7️⃣7️⃣7️⃣7️⃣</div>
+                        <div class="text-center font-bold text-yellow-400">x20 от ставки</div>
+                    </div>
+                    <div class="bg-gray-800/50 p-3 rounded border border-yellow-500/20">
+                        <div class="flex justify-center text-2xl mb-2">⭐⭐⭐⭐⭐</div>
+                        <div class="text-center font-bold text-yellow-400">x15 от ставки</div>
+                    </div>
+                    <div class="bg-gray-800/50 p-3 rounded border border-yellow-500/20">
+                        <div class="flex justify-center text-2xl mb-2">🔔🔔🔔🔔🔔</div>
+                        <div class="text-center font-bold text-yellow-400">x12 от ставки</div>
+                    </div>
+                    <div class="bg-gray-800/50 p-3 rounded border border-yellow-500/20">
+                        <div class="flex justify-center text-2xl mb-2">🍇🍇🍇🍇</div>
+                        <div class="text-center font-bold text-yellow-400">x4 от ставки</div>
+                    </div>
+                    <div class="bg-gray-800/50 p-3 rounded border border-yellow-500/20">
+                        <div class="flex justify-center text-2xl mb-2">🍉🍉🍉</div>
+                        <div class="text-center font-bold text-yellow-400">x1.5 от ставки</div>
+                    </div>
+                    <div class="bg-gray-800/50 p-3 rounded border border-yellow-500/20">
+                        <div class="flex justify-center text-2xl mb-2">🔔🔔</div>
+                        <div class="text-center font-bold text-yellow-400">x0.5 от ставки</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Game variables
+        const symbols = ['🍒', '🍋', '😎', '🍇', '🍉', '7️⃣', '🔔', '⭐'];
+        const symbolWeights = [10, 10, 10, 12, 12, 15, 15, 16];
+        let balance = 0;
+        let currentBet = 1;
+        let isSpinning = false;
+        let reels = [];
+        let userId = null;
+
+        // DOM elements
+        const balanceDisplay = document.getElementById('balance');
+        const userBalanceDisplay = document.getElementById('userBalance');
+        const betInput = document.getElementById('betInput');
+        const betAmountDisplay = document.getElementById('betAmountDisplay');
+        const winMessage = document.getElementById('winMessage');
+        const spinButton = document.getElementById('spinButton');
+        const slotMachine = document.getElementById('slotMachine');
+        const betUpBtn = document.getElementById('betUp');
+        const betDownBtn = document.getElementById('betDown');
+
+        // Initialize Firebase auth listener
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                userId = user.uid;
+                document.getElementById('userSection').classList.remove('hidden');
+                loadUserBalance();
+            } else {
+                window.location.href = 'auth.html';
+            }
+        });
+
+        // Load user balance from Firebase
+        function loadUserBalance() {
+            if (!userId) return;
+
+            const userRef = database.ref('users/' + userId);
+            userRef.on('value', (snapshot) => {
+                const userData = snapshot.val();
+                if (userData && userData.balance) {
+                    balance = userData.balance;
+                    updateUI();
+                }
+            });
+        }
+
+        // Update balance in Firebase
+        function updateUserBalance(newBalance) {
+            if (!userId) return Promise.reject("User not authenticated");
+
+            return new Promise((resolve, reject) => {
+                database.ref('users/' + userId).update({
+                    balance: newBalance
+                }, (error) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve();
+                    }
+                });
+            });
+        }
+
+        // Create reels with symbols (5 reels)
+        function createReels() {
+            slotMachine.innerHTML = '';
+            reels = [];
+
+            for (let i = 0; i < 5; i++) {
+                const reelContainer = document.createElement('div');
+                reelContainer.className = 'reel-container';
+
+                const reelStrip = document.createElement('div');
+                reelStrip.className = 'reel-strip';
+
+                // Create 15 symbols (5 visible + 10 for animation)
+                for (let j = 0; j < 15; j++) {
+                    const symbol = document.createElement('div');
+                    symbol.className = 'symbol';
+                    symbol.textContent = getWeightedRandomSymbol();
+                    reelStrip.appendChild(symbol);
+                }
+
+                reelContainer.appendChild(reelStrip);
+
+                // Add visual effects
+                const shadow = document.createElement('div');
+                shadow.className = 'reel-shadow';
+                reelContainer.appendChild(shadow);
+
+                const overlay = document.createElement('div');
+                overlay.className = 'reel-overlay';
+                reelContainer.appendChild(overlay);
+
+                slotMachine.appendChild(reelContainer);
+                reels.push({
+                    container: reelContainer,
+                    strip: reelStrip,
+                    symbols: reelStrip.children,
+                    position: 0,
+                    spinning: false,
+                    animationId: null
+                });
+            }
+        }
+
+        // Get random symbol with weights
+        function getWeightedRandomSymbol() {
+            const totalWeight = symbolWeights.reduce((a, b) => a + b, 0);
+            let random = Math.random() * totalWeight;
+
+            for (let i = 0; i < symbols.length; i++) {
+                if (random < symbolWeights[i]) {
+                    return symbols[i];
+                }
+                random -= symbolWeights[i];
+            }
+
+            return symbols[0];
+        }
+
+        // Update UI elements
+        function updateUI() {
+            balanceDisplay.textContent = balance;
+            userBalanceDisplay.textContent = balance;
+            betAmountDisplay.textContent = currentBet;
+            betInput.value = currentBet;
+
+            // Disable buttons if balance is too low
+            if (balance < currentBet) {
+                spinButton.classList.add('opacity-50');
+                spinButton.classList.add('cursor-not-allowed');
+            } else {
+                spinButton.classList.remove('opacity-50');
+                spinButton.classList.remove('cursor-not-allowed');
+            }
+        }
+
+        // Change bet amount
+        function changeBet(amount) {
+            const newBet = currentBet + amount;
+            if (newBet >= 10 && newBet <= 10000000) {
+                currentBet = newBet;
+                if (currentBet > balance) {
+                    currentBet = balance;
+                }
+                updateUI();
+            }
+        }
+
+        // Handle bet input changes
+        betInput.addEventListener('change', function() {
+            let newBet = parseInt(this.value);
+            if (isNaN(newBet) || newBet < 1) newBet = 1;
+            if (newBet > 10000000) newBet = 10000000;
+            if (newBet > balance) newBet = balance;
+
+            currentBet = newBet;
+            updateUI();
+        });
+
+        // Spin the reels
+        async function startSpin() {
+            if (isSpinning || balance < currentBet) {
+                if (balance < currentBet) {
+                    winMessage.textContent = "Недостаточно средств!";
+                }
+                return;
+            }
+
+            isSpinning = true;
+            spinButton.disabled = true;
+            winMessage.textContent = '';
+            let winAmount = 0;
+
+            try {
+                // 1. Сначала списываем ставку
+                const newBalance = balance - currentBet;
+                await updateUserBalance(newBalance);
+                balance = newBalance;
+                updateUI();
+
+                // 2. Запускаем анимацию и получаем результаты
+                const results = await spinReelsAnimation();
+
+                // 3. Рассчитываем выигрыш
+                const winResult = calculateWin(results);
+                winAmount = winResult.amount;
+
+                if (winAmount > 0) {
+                    // 4. Зачисляем выигрыш
+                    const winBalance = balance + winAmount;
+                    await updateUserBalance(winBalance);
+                    balance = winBalance;
+                    winMessage.textContent = `Выигрыш: ${winAmount} кредитов!`;
+                    highlightWinningReels(winResult.symbol, results);
+                } else {
+                    winMessage.textContent = "Повезёт в следующий раз!";
+                }
+
+                updateUI();
+            } catch (error) {
+                console.error("Ошибка в процессе игры:", error);
+                winMessage.textContent = "Ошибка соединения. Попробуйте позже.";
+
+                // В случае ошибки возвращаем списанную ставку
+                if (winAmount === 0) {
+                    try {
+                        const refundBalance = balance + currentBet;
+                        await updateUserBalance(refundBalance);
+                        balance = refundBalance;
+                        updateUI();
+                    } catch (err) {
+                        console.error("Ошибка возврата средств:", err);
+                    }
+                }
+            } finally {
+                isSpinning = false;
+                spinButton.disabled = false;
+            }
+        }
+
+        // Анимация вращения барабанов
+        function spinReelsAnimation() {
+            return new Promise((resolve) => {
+                const results = [];
+                let reelsStopped = 0;
+
+                reels.forEach((reel, index) => {
+                    reel.spinning = true;
+                    reel.startTime = Date.now();
+                    reel.duration = 2000 + index * 500 + Math.random() * 500;
+                    reel.speed = 5;
+                    reel.acceleration = 0.5;
+
+                    const spinReel = () => {
+                        if (!reel.spinning) return;
+
+                        const now = Date.now();
+                        const elapsed = now - reel.startTime;
+                        const progress = Math.min(1, elapsed / reel.duration);
+
+                        // Speed curve: slow start -> fast middle -> slow end
+                        if (progress < 0.3) {
+                            reel.speed = 5 + 20 * (progress / 0.3);
+                        } else if (progress > 0.7) {
+                            reel.speed = 25 - 20 * ((progress - 0.7) / 0.3);
+                        } else {
+                            reel.speed = 25;
+                        }
+
+                        reel.position += reel.speed;
+                        if (reel.position >= 80) {
+                            reel.position = 0;
+                            reel.strip.appendChild(reel.strip.firstElementChild.cloneNode(true));
+                            reel.strip.removeChild(reel.strip.firstElementChild);
+                        }
+
+                        reel.strip.style.transform = `translateY(-${reel.position}px)`;
+
+                        if (progress < 1) {
+                            reel.animationId = requestAnimationFrame(spinReel);
+                        } else {
+                            const stopDuration = 1000;
+                            const startPos = reel.position;
+                            const targetPos = Math.round(startPos / 80) * 80;
+
+                            const stopReel = (timestamp) => {
+                                if (!reel.stopStart) reel.stopStart = timestamp;
+                                const elapsed = timestamp - reel.stopStart;
+                                const progress = Math.min(1, elapsed / stopDuration);
+                                const easedProgress = easeOutCubic(progress);
+
+                                reel.position = startPos + (targetPos - startPos) * easedProgress;
+                                reel.strip.style.transform = `translateY(-${reel.position}px)`;
+
+                                if (progress < 1) {
+                                    reel.animationId = requestAnimationFrame(stopReel);
+                                } else {
+                                    reel.position = targetPos;
+                                    reel.spinning = false;
+                                    reel.stopStart = null;
+                                    reel.strip.style.transform = `translateY(-${reel.position}px)`;
+
+                                    const middleIndex = Math.floor(reel.strip.children.length / 2);
+                                    results[index] = reel.strip.children[middleIndex].textContent;
+                                    reelsStopped++;
+
+                                    if (reelsStopped === reels.length) {
+                                        resolve(results);
+                                    }
+                                }
+                            };
+
+                            reel.animationId = requestAnimationFrame(stopReel);
+                        }
+                    };
+
+                    reel.animationId = requestAnimationFrame(spinReel);
+                });
+            });
+        }
+
+        // Easing function for smooth stop
+        function easeOutCubic(t) {
+            return 1 - Math.pow(1 - t, 3);
+        }
+
+        // Calculate win amount for 5 reels
+        function calculateWin(results) {
+            // Check for 5 matching symbols (джекпот)
+            if (results.every(val => val === results[0])) {
+                const winningSymbol = results[0];
+                let multiplier = 0;
+
+                switch(winningSymbol) {
+                    case '7️⃣': multiplier = 20; break;
+                    case '⭐': multiplier = 15; break;
+                    case '🔔': multiplier = 12; break;
+                    case '🍇': multiplier = 10; break;
+                    case '🍉': multiplier = 8; break;
+                    default: multiplier = 5; break;
+                }
+
+                return { amount: currentBet * multiplier, symbol: winningSymbol, count: 5 };
+            }
+
+            // Check for 4 matching symbols
+            const counts = {};
+            results.forEach(symbol => counts[symbol] = (counts[symbol] || 0) + 1);
+
+            for (const [symbol, count] of Object.entries(counts)) {
+                if (count >= 4) {
+                    let multiplier = 0;
+
+                    switch(symbol) {
+                        case '7️⃣': multiplier = 8; break;
+                        case '⭐': multiplier = 6; break;
+                        case '🔔': multiplier = 5; break;
+                        case '🍇': multiplier = 4; break;
+                        case '🍉': multiplier = 3; break;
+                        default: multiplier = 2; break;
+                    }
+
+                    return { amount: currentBet * multiplier, symbol, count };
+                }
+            }
+
+            // Check for 3 matching symbols
+            for (const [symbol, count] of Object.entries(counts)) {
+                if (count >= 3) {
+                    let multiplier = 0;
+
+                    switch(symbol) {
+                        case '7️⃣': multiplier = 5; break;
+                        case '⭐': multiplier = 4; break;
+                        case '🔔': multiplier = 3; break;
+                        case '🍇': multiplier = 2; break;
+                        case '🍉': multiplier = 1.5; break;
+                        default: multiplier = 1; break;
+                    }
+
+                    return { amount: Math.round(currentBet * multiplier), symbol, count };
+                }
+            }
+
+            // Check for 2 matching symbols (только если это специальные символы)
+            for (const [symbol, count] of Object.entries(counts)) {
+                if (count >= 2 && ['7️⃣', '⭐', '🔔'].includes(symbol)) {
+                    return { amount: Math.round(currentBet * 0.5), symbol, count };
+                }
+            }
+
+            return { amount: 0 };
+        }
+
+        // Highlight winning reels
+        function highlightWinningReels(winningSymbol, results) {
+            reels.forEach((reel, index) => {
+                if (results[index] === winningSymbol) {
+                    reel.container.classList.add('winning-reel');
+                    setTimeout(() => {
+                        reel.container.classList.remove('winning-reel');
+                    }, 3000);
+                }
+            });
+        }
+
+        // Event listeners
+        spinButton.addEventListener('click', startSpin);
+        betUpBtn.addEventListener('click', () => changeBet(1));
+        betDownBtn.addEventListener('click', () => changeBet(-1));
+
+        // Initialize game
+        createReels();
+    </script>
+</body>
+</html>

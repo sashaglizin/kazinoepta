@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ЯжНаДэп | Рулетка</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;600;700&display=swap');
+
+        :root {
+            --primary: #6d28d9;
+            --secondary: #06b6d4;
+            --accent: #f59e0b;
+            --dark: #0f172a;
+            --darker: #020617;
+            --neon-purple: #c026d3;
+            --neon-green: #10b981;
+            --neon-blue: #3b82f6;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--darker);
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .neon-text {
+            text-shadow: 0 0 5px rgba(110, 40, 217, 0.8),
+                         0 0 10px rgba(110, 40, 217, 0.6),
+                         0 0 15px rgba(110, 40, 217, 0.4);
+        }
+
+        .neon-box {
+            box-shadow: 0 0 10px rgba(110, 40, 217, 0.5),
+                       inset 0 0 5px rgba(110, 40, 217, 0.3);
+        }
+
+        .neon-button {
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(110, 40, 217, 0.5);
+        }
+
+        .neon-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(110, 40, 217, 0.8);
+        }
+
+        .nav-link {
+            position: relative;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--neon-purple);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        /* Мобильное меню */
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 70px;
+            left: 0;
+            right: 0;
+            background: rgba(2, 6, 23, 0.98);
+            z-index: 40;
+            padding: 20px;
+            border-bottom: 2px solid rgba(110, 40, 217, 0.5);
+            backdrop-filter: blur(10px);
+            max-height: calc(100vh - 70px);
+            overflow-y: auto;
+        }
+
+        .mobile-menu.active {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .balance-display {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(109, 40, 217, 0.5);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+
+        .balance-amount {
+            color: var(--accent);
+            margin-left: 5px;
+        }
+
+        /* Рулетка */
+        .roulette-wheel {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2e7d32, #1b5e20);
+            margin: 20px auto;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            border: 5px solid #5d4037;
+        }
+
+        .wheel-center {
+            width: 40px;
+            height: 40px;
+            background-color: #f59e0b;
+            border-radius: 50%;
+            position: absolute;
+            z-index: 10;
+            box-shadow: 0 0 10px rgba(0,0,0,0.7);
+        }
+
+        .wheel-number {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            transform-origin: 150px 150px;
+            font-size: 16px;
+            color: white;
+            text-shadow: 0 0 3px black;
+        }
+
+        .red {
+            background-color: #ef4444;
+        }
+
+        .black {
+            background-color: #1f2937;
+        }
+
+        .green {
+            background-color: #16a34a;
+        }
+
+        .ball {
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle at 30% 30%, white, #e0e0e0);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-top: -10px;
+            margin-left: -10px;
+            z-index: 15;
+            box-shadow: 0 0 10px rgba(0,0,0,0.8);
+            transform: translate(0, -140px);
+        }
+
+        .roulette-table {
+            display: grid;
+            grid-template-columns: repeat(13, 1fr);
+            gap: 3px;
+            margin: 30px 0;
+        }
+
+        .table-cell {
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .table-cell:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.7);
+        }
+
+        .win-message {
+            color: #f59e0b;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            margin: 15px 0;
+            min-height: 30px;
+        }
+
+        .bet-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 15px 0;
+            align-items: center;
+        }
+
+        .bet-input {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(109, 40, 217, 0.5);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            width: 80px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        /* Адаптация для мобильных */
+        @media (max-width: 767px) {
+            .roulette-wheel {
+                width: 250px;
+                height: 250px;
+            }
+
+            .wheel-number {
+                transform-origin: 125px 125px;
+                width: 35px;
+                height: 35px;
+                font-size: 14px;
+            }
+
+            .ball {
+                transform: translate(0, -115px);
+            }
+
+            .roulette-table {
+                grid-template-columns: repeat(7, 1fr);
+            }
+
+            .table-cell {
+                height: 40px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Инициализация Firebase -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCDBRYFbAZzsc5K95dJQeRVSlyUeS0x2yg",
+            authDomain: "kazinaks.firebaseapp.com",
+            databaseURL: "https://kazinaks-default-rtdb.firebaseio.com",
+            projectId: "kazinaks",
+            storageBucket: "kazinaks.appspot.com",
+            messagingSenderId: "923668859204",
+            appId: "1:923668859204:web:3696ac595e106b6f226f11",
+            measurementId: "G-7CYFK7BGL0"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // Проверка статуса авторизации при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthState();
+        });
+
+        function checkAuthState() {
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    // Пользователь авторизован
+                    document.getElementById('authButtons').style.display = 'none';
+                    document.getElementById('mobileAuthButtons').style.display = 'none';
+                    document.getElementById('userSection').style.display = 'flex';
+                    document.getElementById('mobileUserSection').style.display = 'block';
+
+                    // Загружаем данные пользователя
+                    loadUserData(user.uid);
+                } else {
+                    // Пользователь не авторизован
+                    document.getElementById('authButtons').style.display = 'flex';
+                    document.getElementById('mobileAuthButtons').style.display = 'block';
+                    document.getElementById('userSection').style.display = 'none';
+                    document.getElementById('mobileUserSection').style.display = 'none';
+
+                    // Перенаправляем на страницу авторизации
+                    window.location.href = 'auth.html';
+                }
+            });
+        }
+
+        function loadUserData(userId) {
+            const userRef = database.ref('users/' + userId);
+
+            userRef.on('value', (snapshot) => {
+                const userData = snapshot.val();
+                if (userData && userData.balance) {
+                    updateBalanceDisplay(userData.balance);
+                    balance = userData.balance;
+                    updateBalance();
+                }
+            });
+        }
+
+        function updateBalanceDisplay(balance) {
+            document.getElementById('userBalance').textContent = balance;
+            document.getElementById('mobileUserBalance').textContent = balance;
+            document.getElementById('balance').textContent = balance;
+        }
+
+        function logout() {
+            auth.signOut().then(() => {
+                window.location.href = 'index.html';
+            }).catch((error) => {
+                console.error('Ошибка при выходе:', error);
+            });
+        }
+
+        // Мобильное меню
+        const mobileMenuButton = document.getElementById('mobileMenuButton');
+        const mobileMenu = document.getElementById('mobileMenu');
+
+        mobileMenuButton.addEventListener('click', function() {
+            mobileMenu.classList.toggle('active');
+            this.classList.toggle('active');
+        });
+
+        document.querySelectorAll('#mobileMenu a').forEach(link => {
+            link.addEventListener('click', function() {
+                mobileMenu.classList.remove('active');
+                mobileMenuButton.classList.remove('active');
+            });
+        });
+    </script>
+
+    <!-- Header -->
+    <header class="bg-gradient-to-b from-violet-900/30 to-transparent backdrop-blur-sm fixed w-full z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <!-- Logo -->
+            <div class="flex items-center space-x-2">
+                <div class="text-3xl md:text-4xl text-yellow-400">
+                    <i class="fas fa-dragon"></i>
+                </div>
+                <h1 class="font-orbitron text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 bg-clip-text text-transparent">
+                    ЯжНаДэп
+                </h1>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="hidden md:flex space-x-8">
+                <a href="index.html#slots" class="nav-link text-white hover:text-purple-300 font-semibold transition">Слоты</a>
+                <a href="index.html#table" class="nav-link text-white hover:text-cyan-300 font-semibold transition">Настолки</a>
+                <a href="index.html#mini" class="nav-link text-white hover:text-green-300 font-semibold transition">Мини игры</a>
+            </nav>
+
+            <!-- Auth Buttons (до входа) -->
+            <div id="authButtons" class="hidden md:flex items-center space-x-4">
+                <button onclick="window.location.href='auth.html?action=login'" class="px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 to-blue-500 text-white font-semibold neon-button">
+                    Войти
+                </button>
+                <button onclick="window.location.href='auth.html?action=register'" class="px-4 py-2 rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 text-gray-900 font-bold neon-button">
+                    Регистрация
+                </button>
+            </div>
+
+            <!-- User Section (после входа) -->
+            <div id="userSection" class="hidden md:flex items-center space-x-4">
+                <div class="balance-display">
+                    <i class="fas fa-coins text-yellow-400"></i>
+                    <span class="balance-amount" id="userBalance">0</span>
+                </div>
+                <button onclick="window.location.href='nas.html'" class="px-4 py-2 rounded-full bg-gray-700 hover:bg-gray-600 text-white font-semibold transition">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <button id="mobileMenuButton" class="md:hidden text-white text-2xl">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="mobile-menu">
+        <a href="index.html#slots" class="block py-2 text-white hover:text-purple-300 font-semibold transition">Слоты</a>
+        <a href="index.html#table" class="block py-2 text-white hover:text-cyan-300 font-semibold transition">Настолки</a>
+        <a href="index.html#mini" class="block py-2 text-white hover:text-green-300 font-semibold transition">Мини игры</a>
+
+        <!-- Для неавторизованных -->
+        <div id="mobileAuthButtons" class="mt-4 flex flex-col space-y-3">
+            <button onclick="window.location.href='auth.html?action=login'" class="rounded-full bg-gradient-to-r from-purple-600 to-blue-500 text-white font-semibold neon-button py-2">
+                Войти
+            </button>
+            <button onclick="window.location.href='auth.html?action=register'" class="rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 text-gray-900 font-bold neon-button py-2">
+                Регистрация
+            </button>
+        </div>
+
+        <!-- Для авторизованных -->
+        <div id="mobileUserSection" class="hidden mt-4">
+            <div class="flex items-center justify-between mb-4">
+                <div class="balance-display">
+                    <i class="fas fa-coins text-yellow-400"></i>
+                    <span class="balance-amount" id="mobileUserBalance">0</span>
+                </div>
+                <button onclick="window.location.href='nas.html'" class="px-4 py-2 rounded-full bg-gray-700 hover:bg-gray-600 text-white font-semibold transition">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="pt-16 md:pt-20 pb-10">
+        <div class="container mx-auto px-4">
+            <!-- Back Button -->
+            <button onclick="window.location.href='index.html'" class="mb-6 px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 to-blue-500 text-white font-semibold flex items-center neon-button">
+                <i class="fas fa-arrow-left mr-2"></i> Назад
+            </button>
+
+            <!-- Game Title -->
+            <div class="text-center mb-8">
+                <h2 class="text-2xl md:text-4xl font-bold mb-2 font-orbitron text-purple-400 neon-text">
+                    <i class="fas fa-dharmachakra mr-2"></i> РУЛЕТКА
+                </h2>
+                <p class="text-gray-400">Крути колесо и выигрывай по-крупному!</p>
+            </div>
+
+            <!-- Balance -->
+            <div class="flex justify-center mb-6">
+                <div class="balance-display px-6 py-3">
+                    <i class="fas fa-coins text-yellow-400 mr-2"></i>
+                    Баланс: <span id="balance" class="balance-amount">0</span>
+                </div>
+            </div>
+
+            <!-- Bet Controls -->
+            <div class="bet-controls">
+                <div class="flex flex-col items-center">
+                    <div class="text-sm text-gray-400 mb-1">Ставка</div>
+                    <input type="number" id="betAmount" class="bet-input" value="50" min="10" max="1000">
+                </div>
+            </div>
+
+            <!-- Win Message -->
+            <div class="win-message" id="winMessage"></div>
+
+            <!-- Roulette Wheel -->
+            <div class="flex justify-center mb-8">
+                <div class="roulette-wheel" id="rouletteWheel">
+                    <div class="wheel-center"></div>
+                    <div class="ball" id="ball"></div>
+                    <!-- Числа будут добавлены через JS -->
+                </div>
+            </div>
+
+            <!-- Roulette Table -->
+            <div class="roulette-table" id="rouletteTable">
+                <!-- Ячейки ставок будут добавлены через JS -->
+            </div>
+
+            <!-- Bet Controls -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
+                <button onclick="placeBet('red')" class="px-4 py-3 rounded-lg bg-gradient-to-r from-red-600 to-pink-500 text-white font-semibold neon-button">
+                    Красное (x2)
+                </button>
+                <button onclick="placeBet('black')" class="px-4 py-3 rounded-lg bg-gradient-to-r from-gray-800 to-gray-700 text-white font-semibold neon-button">
+                    Чёрное (x2)
+                </button>
+                <button onclick="placeBet('even')" class="px-4 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-500 text-white font-semibold neon-button">
+                    Чётное (x2)
+                </button>
+                <button onclick="placeBet('odd')" class="px-4 py-3 rounded-lg bg-gradient-to-r from-yellow-600 to-amber-500 text-white font-semibold neon-button">
+                    Нечётное (x2)
+                </button>
+                <button onclick="placeBet('1-18')" class="px-4 py-3 rounded-lg bg-gradient-to-r from-green-600 to-emerald-500 text-white font-semibold neon-button">
+                    1-18 (x2)
+                </button>
+                <button onclick="placeBet('19-36')" class="px-4 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white font-semibold neon-button">
+                    19-36 (x2)
+                </button>
+            </div>
+
+            <!-- Spin Button -->
+            <div class="text-center">
+                <button id="spinButton" class="px-8 py-4 rounded-full bg-gradient-to-r from-red-600 to-pink-500 text-white font-bold text-xl neon-button">
+                    КРУТИТЬ!
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 border-t border-gray-800 py-8">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-2 mb-4 md:mb-0">
+                    <div class="text-2xl text-yellow-400">
+                        <i class="fas fa-dragon"></i>
+                    </div>
+                    <h3 class="font-orbitron text-lg font-bold bg-gradient-to-r from-purple-500 to-yellow-500 bg-clip-text text-transparent">
+                        ЯжНаДэп
+                    </h3>
+                </div>
+                <p class="text-gray-400 text-sm">
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Инициализация переменных
+        const numbers = [
+            {num: 0, color: 'green'},
+            {num: 32, color: 'red'}, {num: 15, color: 'black'}, {num: 19, color: 'red'}, {num: 4, color: 'black'},
+            {num: 21, color: 'red'}, {num: 2, color: 'black'}, {num: 25, color: 'red'}, {num: 17, color: 'black'},
+            {num: 34, color: 'red'}, {num: 6, color: 'black'}, {num: 27, color: 'red'}, {num: 13, color: 'black'},
+            {num: 36, color: 'red'}, {num: 11, color: 'black'}, {num: 30, color: 'red'}, {num: 8, color: 'black'},
+            {num: 23, color: 'red'}, {num: 10, color: 'black'}, {num: 5, color: 'red'}, {num: 24, color: 'black'},
+            {num: 16, color: 'red'}, {num: 33, color: 'black'}, {num: 1, color: 'red'}, {num: 20, color: 'black'},
+            {num: 14, color: 'red'}, {num: 31, color: 'black'}, {num: 9, color: 'red'}, {num: 22, color: 'black'},
+            {num: 18, color: 'red'}, {num: 29, color: 'black'}, {num: 7, color: 'red'}, {num: 28, color: 'black'},
+            {num: 12, color: 'red'}, {num: 35, color: 'black'}, {num: 3, color: 'red'}, {num: 26, color: 'black'}
+        ];
+
+        let balance = 0;
+        let currentBet = 50;
+        let bets = {};
+        let isSpinning = false;
+        let spinAnimation = null;
+
+        // Элементы DOM
+        const balanceDisplay = document.getElementById('balance');
+        const betAmountInput = document.getElementById('betAmount');
+        const winMessage = document.getElementById('winMessage');
+        const rouletteWheel = document.getElementById('rouletteWheel');
+        const rouletteTable = document.getElementById('rouletteTable');
+        const ball = document.getElementById('ball');
+        const spinButton = document.getElementById('spinButton');
+
+        // Создание колеса рулетки
+        function createWheel() {
+            numbers.forEach((number, index) => {
+                const angle = (index / numbers.length) * 360;
+                const numberElement = document.createElement('div');
+                numberElement.className = `wheel-number ${number.color}`;
+                numberElement.textContent = number.num;
+                numberElement.style.transform = `rotate(${angle}deg) translate(0, -140px) rotate(${-angle}deg)`;
+                rouletteWheel.appendChild(numberElement);
+            });
+        }
+
+        // Создание таблицы ставок
+        function createTable() {
+            // Первый ряд (0)
+            const zeroCell = document.createElement('div');
+            zeroCell.className = 'table-cell green';
+            zeroCell.textContent = '0';
+            zeroCell.style.gridColumn = '1 / span 2';
+            zeroCell.onclick = () => placeBet('0');
+            rouletteTable.appendChild(zeroCell);
+
+            // Основные числа (1-36)
+            for (let i = 1; i <= 36; i++) {
+                const number = numbers.find(n => n.num === i);
+                const cell = document.createElement('div');
+                cell.className = `table-cell ${number.color}`;
+                cell.textContent = i;
+                cell.onclick = () => placeBet(i.toString());
+                rouletteTable.appendChild(cell);
+            }
+        }
+
+        // Размещение ставки
+        function placeBet(type) {
+            if (isSpinning) {
+                winMessage.textContent = 'Дождитесь окончания вращения!';
+                return;
+            }
+
+            currentBet = parseInt(betAmountInput.value) || 50;
+            if (currentBet < 10) {
+                winMessage.textContent = 'Минимальная ставка - 10';
+                return;
+            }
+
+            if (currentBet > balance) {
+                winMessage.textContent = 'Недостаточно средств';
+                return;
+            }
+
+            if (!bets[type]) {
+                bets[type] = 0;
+            }
+
+            bets[type] += currentBet;
+            balance -= currentBet;
+            updateBalance();
+
+            winMessage.textContent = `Поставлено ${currentBet} на ${getBetName(type)}`;
+        }
+
+        // Получение названия ставки
+        function getBetName(type) {
+            const betNames = {
+                '0': '0',
+                'red': 'красное',
+                'black': 'чёрное',
+                'even': 'чётное',
+                'odd': 'нечётное',
+                '1-18': '1-18',
+                '19-36': '19-36'
+            };
+            return betNames[type] || type;
+        }
+
+        // Вращение рулетки
+        function spin() {
+            if (isSpinning || Object.keys(bets).length === 0) {
+                if (Object.keys(bets).length === 0) {
+                    winMessage.textContent = 'Сделайте хотя бы одну ставку!';
+                }
+                return;
+            }
+
+            isSpinning = true;
+            spinButton.disabled = true;
+            winMessage.textContent = 'Колесо вращается...';
+
+            // Анимация вращения
+            let rotations = 0;
+            const maxRotations = 3 + Math.random() * 2;
+            const winningNumber = numbers[Math.floor(Math.random() * numbers.length)];
+            const ballRadius = 140; // Расстояние от центра до мячика
+
+            // Начальное положение шарика
+            ball.style.transform = `rotate(0deg) translate(0, -${ballRadius}px) rotate(0deg)`;
+
+            spinAnimation = setInterval(() => {
+                rotations += 0.05;
+                const currentAngle = (rotations * 360) % 360;
+
+                // Обновляем позицию шарика
+                ball.style.transform = `rotate(${currentAngle}deg) translate(0, -${ballRadius}px) rotate(${-currentAngle}deg)`;
+
+                if (rotations >= maxRotations) {
+                    clearInterval(spinAnimation);
+                    setTimeout(() => {
+                        // Плавная остановка на выигрышном номере
+                        const winningIndex = numbers.findIndex(n => n.num === winningNumber.num);
+                        const winningAngle = (winningIndex / numbers.length) * 360;
+                        const finalAngle = (maxRotations * 360) + winningAngle;
+
+                        let stopRotation = maxRotations * 360;
+                        const stopAnimation = setInterval(() => {
+                            stopRotation += 0.5;
+                            ball.style.transform = `rotate(${stopRotation}deg) translate(0, -${ballRadius}px) rotate(${-stopRotation}deg)`;
+
+                            if (stopRotation >= finalAngle) {
+                                clearInterval(stopAnimation);
+                                stopSpin(winningNumber);
+                            }
+                        }, 20);
+                    }, 1000);
+                }
+            }, 20);
+        }
+
+        // Остановка вращения
+        function stopSpin(winningNumber) {
+            isSpinning = false;
+            spinButton.disabled = false;
+
+            // Определение выигрышных ставок
+            let winAmount = 0;
+            const winningBets = [];
+
+            for (const [type, amount] of Object.entries(bets)) {
+                let isWin = false;
+                let multiplier = 1;
+
+                if (type === winningNumber.num.toString()) {
+                    isWin = true;
+                    multiplier = 35;
+                } else if (type === 'red' && winningNumber.color === 'red' && winningNumber.num !== 0) {
+                    isWin = true;
+                    multiplier = 2;
+                } else if (type === 'black' && winningNumber.color === 'black') {
+                    isWin = true;
+                    multiplier = 2;
+                } else if (type === 'even' && winningNumber.num % 2 === 0 && winningNumber.num !== 0) {
+                    isWin = true;
+                    multiplier = 2;
+                } else if (type === 'odd' && winningNumber.num % 2 === 1) {
+                    isWin = true;
+                    multiplier = 2;
+                } else if (type === '1-18' && winningNumber.num >= 1 && winningNumber.num <= 18) {
+                    isWin = true;
+                    multiplier = 2;
+                } else if (type === '19-36' && winningNumber.num >= 19 && winningNumber.num <= 36) {
+                    isWin = true;
+                    multiplier = 2;
+                }
+
+                if (isWin) {
+                    const win = amount * multiplier;
+                    winAmount += win;
+                    winningBets.push(`${getBetName(type)} (x${multiplier})`);
+                }
+            }
+
+            // Обновление баланса
+            if (winAmount > 0) {
+                balance += winAmount;
+                updateBalance();
+                winMessage.textContent = `Выигрыш: ${winAmount}! Выпало ${winningNumber.num} (${winningNumber.color === 'red' ? 'красное' : winningNumber.color === 'black' ? 'чёрное' : 'зелёное'})`;
+            } else {
+                winMessage.textContent = `Выпало ${winningNumber.num} (${winningNumber.color === 'red' ? 'красное' : winningNumber.color === 'black' ? 'чёрное' : 'зелёное'}). Вы проиграли.`;
+            }
+
+            // Сброс ставок
+            bets = {};
+        }
+
+        // Обновление баланса
+        function updateBalance() {
+            balanceDisplay.textContent = balance;
+            // Обновляем баланс в Firebase
+            const user = auth.currentUser;
+            if (user) {
+                database.ref('users/' + user.uid).update({
+                    balance: balance
+                });
+            }
+        }
+
+        // Обработчики событий
+        spinButton.addEventListener('click', spin);
+
+        betAmountInput.addEventListener('change', function() {
+            currentBet = parseInt(this.value);
+            if (isNaN(currentBet) || currentBet < 10) {
+                this.value = 10;
+                currentBet = 10;
+            } else if (currentBet > balance) {
+                this.value = Math.min(balance, 1000);
+                currentBet = this.value;
+            }
+        });
+
+        // Инициализация при загрузке
+        createWheel();
+        createTable();
+
+        // Проверка авторизации и загрузка баланса
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                database.ref('users/' + user.uid + '/balance').once('value').then(snapshot => {
+                    balance = snapshot.val() || 1000;
+                    updateBalance();
+                });
+            }
+        });
+    </script>
+</body>
+</html>

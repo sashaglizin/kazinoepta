@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ЯжНаДэп | Настройки</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;600;700&display=swap');
+
+        :root {
+            --primary: #6d28d9;
+            --secondary: #06b6d4;
+            --accent: #f59e0b;
+            --dark: #0f172a;
+            --darker: #020617;
+            --neon-purple: #c026d3;
+            --neon-green: #10b981;
+            --neon-blue: #3b82f6;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--darker);
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .neon-text {
+            text-shadow: 0 0 5px rgba(110, 40, 217, 0.8),
+                         0 0 10px rgba(110, 40, 217, 0.6),
+                         0 0 15px rgba(110, 40, 217, 0.4);
+        }
+
+        .neon-box {
+            box-shadow: 0 0 10px rgba(110, 40, 217, 0.5),
+                       inset 0 0 5px rgba(110, 40, 217, 0.3);
+        }
+
+        .neon-button {
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(110, 40, 217, 0.5);
+        }
+
+        .neon-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(110, 40, 217, 0.8);
+        }
+
+        .avatar-upload {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid var(--primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .avatar-upload:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(110, 40, 217, 0.7);
+        }
+
+        .avatar-preview {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .avatar-upload input {
+            display: none;
+        }
+
+        .avatar-upload label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            text-align: center;
+            padding: 5px;
+            font-size: 12px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .avatar-upload:hover label {
+            transform: translateY(0);
+        }
+
+        .promo-input, .transfer-input {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(109, 40, 217, 0.5);
+            color: white;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .promo-input:focus, .transfer-input:focus {
+            border-color: var(--neon-purple);
+            box-shadow: 0 0 10px rgba(110, 40, 217, 0.5);
+        }
+
+        /* Модальное окно */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background: var(--darker);
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            padding: 20px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            animation: modalFadeIn 0.5s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 100;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(109, 40, 217, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .copy-btn {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            color: var(--accent);
+            transform: scale(1.1);
+        }
+
+        .settings-tab {
+            padding: 10px 15px;
+            font-size: 14px;
+        }
+
+        @media (min-width: 768px) {
+            .avatar-upload {
+                width: 120px;
+                height: 120px;
+            }
+            .back-button {
+                top: 20px;
+                left: 20px;
+                width: auto;
+                height: auto;
+                padding: 8px 15px;
+                border-radius: 20px;
+            }
+            .settings-tab {
+                padding: 12px 20px;
+                font-size: 16px;
+            }
+            .modal-content {
+                padding: 30px;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Инициализация Firebase -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCDBRYFbAZzsc5K95dJQeRVSlyUeS0x2yg",
+            authDomain: "kazinaks.firebaseapp.com",
+            databaseURL: "https://kazinaks-default-rtdb.firebaseio.com",
+            projectId: "kazinaks",
+            storageBucket: "kazinaks.appspot.com",
+            messagingSenderId: "923668859204",
+            appId: "1:923668859204:web:3696ac595e106b6f226f11",
+            measurementId: "G-7CYFK7BGL0"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // Проверка статуса авторизации при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthState();
+            setupTabs();
+        });
+
+        function setupTabs() {
+            const tabs = document.querySelectorAll('.settings-tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Удаляем активный класс у всех вкладок
+                    tabs.forEach(t => t.classList.remove('active'));
+                    // Добавляем активный класс текущей вкладке
+                    this.classList.add('active');
+
+                    // Скрываем все содержимое вкладок
+                    tabContents.forEach(content => {
+                        content.classList.add('hidden');
+                    });
+
+                    // Показываем содержимое текущей вкладки
+                    const target = this.getAttribute('data-tab');
+                    document.getElementById(target).classList.remove('hidden');
+                });
+            });
+        }
+
+        function checkAuthState() {
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    // Пользователь авторизован
+                    loadUserData(user.uid);
+                    // Отображаем email
+                    document.getElementById('emailDisplay').textContent = user.email || 'Не указан';
+                    // Устанавливаем ID пользователя
+                    document.getElementById('userId').textContent = user.uid;
+                    document.getElementById('userIdShort').textContent = user.uid.substring(0, 8);
+                } else {
+                    // Пользователь не авторизован - перенаправляем на страницу авторизации
+                    window.location.href = 'auth.html?action=login';
+                }
+            });
+        }
+
+        function loadUserData(userId) {
+            const userRef = database.ref('users/' + userId);
+
+            userRef.on('value', (snapshot) => {
+                const userData = snapshot.val();
+                if (userData) {
+                    // Обновляем отображение данных пользователя
+                    updateUserDisplay(userData);
+                }
+            });
+        }
+
+        function updateUserDisplay(userData) {
+            // Баланс
+            if (userData.balance) {
+                document.getElementById('userBalance').textContent = userData.balance;
+            }
+
+            // Имя пользователя
+            if (userData.username) {
+                document.getElementById('usernameDisplay').textContent = userData.username;
+                document.getElementById('usernameInput').value = userData.username;
+            }
+
+            // Аватар
+            if (userData.avatar) {
+                document.getElementById('avatarPreview').src = userData.avatar;
+            }
+        }
+
+        function updateUsername() {
+            const newUsername = document.getElementById('usernameInput').value.trim();
+            if (!newUsername) {
+                showToast('Имя пользователя не может быть пустым', 'error');
+                return;
+            }
+
+            const userId = auth.currentUser.uid;
+            database.ref('users/' + userId).update({
+                username: newUsername
+            }).then(() => {
+                showToast('Имя успешно изменено!', 'success');
+                document.getElementById('usernameDisplay').textContent = newUsername;
+            }).catch(error => {
+                showToast('Ошибка при изменении имени: ' + error.message, 'error');
+            });
+        }
+
+        function uploadAvatar(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Проверяем тип файла
+            if (!file.type.match('image.*')) {
+                showToast('Пожалуйста, выберите изображение', 'error');
+                return;
+            }
+
+            // Проверяем размер файла (не более 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                showToast('Размер изображения не должен превышать 2MB', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('key', '91ccbb6ef9b3e8422dbef0090f2f5160'); // API ключ imgBB
+
+            showToast('Загрузка аватара...', 'info');
+
+            fetch('https://api.imgbb.com/1/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const imageUrl = data.data.url;
+
+                    // Сохраняем URL аватара в Firebase
+                    const userId = auth.currentUser.uid;
+                    return database.ref('users/' + userId).update({
+                        avatar: imageUrl
+                    });
+                } else {
+                    throw new Error(data.error?.message || 'Не удалось загрузить изображение');
+                }
+            })
+            .then(() => {
+                showToast('Аватар успешно обновлен!', 'success');
+                document.getElementById('avatarPreview').src = URL.createObjectURL(file);
+            })
+            .catch(error => {
+                showToast('Ошибка при загрузке аватара: ' + error.message, 'error');
+                console.error('Error:', error);
+            });
+        }
+
+        function activatePromocode() {
+            const promoInput = document.getElementById('promoInput');
+            const promoCode = promoInput.value.trim().toLowerCase();
+
+            if (!promoCode) {
+                showToast('Введите промокод', 'error');
+                return;
+            }
+
+            const userId = auth.currentUser.uid;
+            const userRef = database.ref('users/' + userId);
+
+            // Проверяем, активировал ли уже пользователь этот промокод
+            userRef.once('value').then(snapshot => {
+                const userData = snapshot.val();
+                const activatedPromos = userData.activatedPromocodes || {};
+
+                if (activatedPromos[promoCode]) {
+                    showToast('Вы уже активировали этот промокод', 'error');
+                    return;
+                }
+
+                // Проверяем промокод
+                let amount = 0;
+                let message = '';
+
+                switch(promoCode) {
+                    case 'ежик':
+                        amount = 1000;
+                        message = 'Промокод "ежик" активирован! +1000₽';
+                        showToast(message, 'success');
+                        break;
+                    case 'таня':
+                        amount = 10000;
+                        message = 'А ведь я ее любил...';
+                        showTanyaModal(message);
+                        break;
+                    default:
+                        showToast('Неверный промокод', 'error');
+                        return;
+                }
+
+                // Обновляем баланс и список активированных промокодов
+                const updates = {};
+                updates['balance'] = (userData.balance || 0) + amount;
+                updates['activatedPromocodes/' + promoCode] = amount;
+
+                return userRef.update(updates).then(() => {
+                    promoInput.value = '';
+                    // Обновляем баланс
+                    document.getElementById('userBalance').textContent = (userData.balance || 0) + amount;
+                });
+            }).catch(error => {
+                showToast('Ошибка: ' + error.message, 'error');
+            });
+        }
+
+        function transferMoney() {
+            const recipientId = document.getElementById('recipientId').value.trim();
+            const amount = parseInt(document.getElementById('transferAmount').value);
+
+            if (!recipientId) {
+                showToast('Введите ID получателя', 'error');
+                return;
+            }
+
+            if (isNaN(amount) || amount <= 0) {
+                showToast('Введите корректную сумму', 'error');
+                return;
+            }
+
+            const senderId = auth.currentUser.uid;
+
+            // Проверяем, что отправитель и получатель - разные пользователи
+            if (senderId === recipientId) {
+                showToast('Нельзя переводить деньги самому себе', 'error');
+                return;
+            }
+
+            const senderRef = database.ref('users/' + senderId);
+            const recipientRef = database.ref('users/' + recipientId);
+
+            // Проверяем, что получатель существует
+            recipientRef.once('value').then(recipientSnapshot => {
+                if (!recipientSnapshot.exists()) {
+                    throw new Error('Пользователь с таким ID не найден');
+                }
+
+                // Проверяем баланс отправителя
+                return senderRef.once('value');
+            }).then(senderSnapshot => {
+                const senderData = senderSnapshot.val();
+                const senderBalance = senderData.balance || 0;
+
+                if (senderBalance < amount) {
+                    throw new Error('Недостаточно средств на балансе');
+                }
+
+                // Получаем данные получателя
+                return recipientRef.once('value').then(recipientSnapshot => {
+                    const recipientData = recipientSnapshot.val();
+                    const recipientBalance = recipientData.balance || 0;
+
+                    // Обновляем балансы
+                    const updates = {};
+                    updates['users/' + senderId + '/balance'] = senderBalance - amount;
+                    updates['users/' + recipientId + '/balance'] = recipientBalance + amount;
+
+                    return database.ref().update(updates);
+                });
+            }).then(() => {
+                showToast(`Успешно переведено ${amount}₽`, 'success');
+                document.getElementById('recipientId').value = '';
+                document.getElementById('transferAmount').value = '';
+                // Обновляем баланс отправителя
+                return senderRef.once('value');
+            }).then(senderSnapshot => {
+                document.getElementById('userBalance').textContent = senderSnapshot.val().balance;
+            }).catch(error => {
+                showToast('Ошибка перевода: ' + error.message, 'error');
+            });
+        }
+
+        function copyUserId() {
+            const userId = auth.currentUser.uid;
+            navigator.clipboard.writeText(userId).then(() => {
+                showToast('ID скопирован в буфер обмена', 'success');
+            }).catch(err => {
+                showToast('Не удалось скопировать ID', 'error');
+            });
+        }
+
+        function showTanyaModal(message) {
+            const modal = document.getElementById('tanyaModal');
+            const modalMessage = document.getElementById('tanyaMessage');
+
+            modalMessage.textContent = message;
+            modal.classList.add('active');
+
+            // Автоматическое закрытие через 5 секунд
+            setTimeout(() => {
+                modal.classList.remove('active');
+            }, 5000);
+        }
+
+        function closeModal() {
+            document.getElementById('tanyaModal').classList.remove('active');
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+
+            // Устанавливаем цвет в зависимости от типа
+            switch(type) {
+                case 'success':
+                    toast.className = 'toast bg-green-600';
+                    break;
+                case 'error':
+                    toast.className = 'toast bg-red-600';
+                    break;
+                case 'info':
+                    toast.className = 'toast bg-blue-600';
+                    break;
+                default:
+                    toast.className = 'toast bg-purple-600';
+            }
+
+            toast.classList.add('show');
+
+            // Автоматическое скрытие через 5 секунд
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 5000);
+        }
+
+        function logout() {
+            auth.signOut().then(() => {
+                window.location.href = 'index.html';
+            }).catch((error) => {
+                showToast('Ошибка при выходе: ' + error.message, 'error');
+            });
+        }
+    </script>
+
+    <!-- Кнопка возврата -->
+    <button onclick="window.location.href='index.html'" class="back-button text-white">
+        <i class="fas fa-arrow-left"></i>
+        <span class="hidden md:inline ml-1">На главную</span>
+    </button>
+
+    <!-- Header -->
+    <header class="bg-gradient-to-b from-violet-900/30 to-transparent backdrop-blur-sm fixed w-full z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <!-- Logo -->
+            <div class="flex items-center space-x-2">
+                <div class="text-2xl md:text-3xl text-yellow-400">
+                    <i class="fas fa-dragon"></i>
+                </div>
+                <h1 class="font-orbitron text-lg md:text-xl font-bold bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 bg-clip-text text-transparent">
+                    ЯжНаДэп
+                </h1>
+            </div>
+
+            <!-- User Section -->
+            <div class="flex items-center space-x-3">
+                <div class="balance-display text-sm md:text-base">
+                    <i class="fas fa-coins text-yellow-400"></i>
+                    <span class="balance-amount" id="userBalance">0</span>
+                </div>
+                <button onclick="logout()" class="px-3 py-1 md:px-4 md:py-2 rounded-full bg-red-600 hover:bg-red-700 text-white text-sm md:text-base font-semibold transition">
+                    Выйти
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="pt-16 md:pt-20 pb-10">
+        <div class="container mx-auto px-4">
+            <!-- Profile Header -->
+            <div class="flex flex-col items-center mb-6 md:mb-8">
+                <!-- Аватар -->
+                <div class="avatar-upload mb-4">
+                    <img id="avatarPreview" src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png" class="avatar-preview" alt="Аватар">
+                    <input type="file" id="avatarInput" accept="image/*" onchange="uploadAvatar(event)">
+                    <label for="avatarInput">Изменить</label>
+                </div>
+
+                <!-- Информация -->
+                <div class="text-center mb-4">
+                    <h2 class="text-xl md:text-2xl font-bold" id="usernameDisplay">Гость</h2>
+                    <p class="text-gray-400 text-sm md:text-base" id="emailDisplay">email@example.com</p>
+                </div>
+
+                <!-- ID пользователя -->
+                <div class="bg-purple-900/30 px-3 py-1 rounded-lg flex items-center mb-4">
+                    <span class="text-xs md:text-sm text-purple-300 mr-2">ID: <span id="userIdShort"></span></span>
+                    <i class="fas fa-copy text-purple-300 copy-btn" onclick="copyUserId()" title="Копировать ID"></i>
+                </div>
+            </div>
+
+            <!-- Навигация по настройкам -->
+            <div class="flex overflow-x-auto space-x-2 md:space-x-4 border-b border-gray-800 mb-6 pb-2">
+                <button class="settings-tab active whitespace-nowrap" data-tab="profile">Профиль</button>
+                <button class="settings-tab whitespace-nowrap" data-tab="promo">Промокоды</button>
+                <button class="settings-tab whitespace-nowrap" data-tab="transfer">Перевод</button>
+            </div>
+
+            <!-- Профиль -->
+            <div id="profile" class="tab-content">
+                <div class="bg-gray-900/50 rounded-xl p-4 md:p-6 neon-box mb-6">
+                    <h3 class="text-lg md:text-xl font-bold mb-4">Личная информация</h3>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-gray-400 mb-2 text-sm md:text-base">Имя пользователя</label>
+                            <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2">
+                                <input type="text" id="usernameInput" class="flex-grow px-3 py-2 md:px-4 md:py-2 rounded-lg bg-gray-800 border border-gray-700 focus:border-purple-500 focus:outline-none text-sm md:text-base">
+                                <button onclick="updateUsername()" class="px-3 py-2 md:px-4 md:py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold transition text-sm md:text-base">
+                                    Сохранить
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-400 mb-2 text-sm md:text-base">Email</label>
+                            <input type="email" class="w-full px-3 py-2 md:px-4 md:py-2 rounded-lg bg-gray-800 border border-gray-700 cursor-not-allowed text-sm md:text-base" disabled>
+                            <p class="text-xs text-gray-500 mt-1">Для изменения email обратитесь в поддержку</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Промокоды -->
+            <div id="promo" class="tab-content hidden">
+                <div class="bg-gray-900/50 rounded-xl p-4 md:p-6 neon-box mb-6">
+                    <h3 class="text-lg md:text-xl font-bold mb-4">Активировать промокод</h3>
+
+                    <div class="flex flex-col space-y-2">
+                        <input type="text" id="promoInput" placeholder="Введите промокод" class="px-3 py-2 md:px-4 md:py-3 rounded-lg promo-input focus:outline-none text-sm md:text-base">
+                        <button onclick="activatePromocode()" class="px-4 py-2 md:px-6 md:py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold neon-button text-sm md:text-base">
+                            Активировать
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Перевод денег -->
+            <div id="transfer" class="tab-content hidden">
+                <div class="bg-gray-900/50 rounded-xl p-4 md:p-6 neon-box mb-6">
+                    <h3 class="text-lg md:text-xl font-bold mb-4">Перевод денег</h3>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-gray-400 mb-2 text-sm md:text-base">ID получателя</label>
+                            <input type="text" id="recipientId" class="w-full px-3 py-2 md:px-4 md:py-2 rounded-lg transfer-input focus:outline-none text-sm md:text-base" placeholder="Введите ID пользователя">
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-400 mb-2 text-sm md:text-base">Сумма перевода</label>
+                            <input type="number" id="transferAmount" class="w-full px-3 py-2 md:px-4 md:py-2 rounded-lg transfer-input focus:outline-none text-sm md:text-base" placeholder="Введите сумму">
+                        </div>
+
+                        <button onclick="transferMoney()" class="w-full px-4 py-2 md:px-6 md:py-3 rounded-lg bg-gradient-to-r from-green-600 to-emerald-500 text-white font-semibold neon-button text-sm md:text-base">
+                            Перевести
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900/50 rounded-xl p-4 md:p-6 neon-box">
+                    <h3 class="text-lg md:text-xl font-bold mb-3">Ваш ID для переводов</h3>
+                    <div class="flex items-center justify-between bg-gray-800/50 rounded-lg px-3 py-2">
+                        <span class="text-sm md:text-base text-gray-300 truncate mr-2" id="userId"></span>
+                        <button onclick="copyUserId()" class="text-purple-400 hover:text-purple-300">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Дайте этот ID другу, чтобы он мог перевести вам деньги</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Модальное окно для промокода "Таня" -->
+    <div id="tanyaModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <h2 class="text-2xl md:text-3xl font-bold mb-3 md:mb-4 text-purple-400">Промокод активирован!</h2>
+            <p class="text-xl md:text-2xl mb-4 md:mb-6" id="tanyaMessage"></p>
+            <p class="text-yellow-400 text-lg md:text-xl font-bold">+10000₽ зачислено на ваш баланс</p>
+        </div>
+    </div>
+
+    <!-- Toast уведомления -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 border-t border-gray-800 py-6">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-2 mb-3 md:mb-0">
+                    <div class="text-xl text-yellow-400">
+                        <i class="fas fa-dragon"></i>
+                    </div>
+                    <h3 class="font-orbitron text-md font-bold bg-gradient-to-r from-purple-500 to-yellow-500 bg-clip-text text-transparent">
+                        ЯжНаДэп
+                    </h3>
+                </div>
+
+                <p class="text-xs md:text-sm text-gray-500">© 2023 ЯжНаДэп. Все права защищены.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

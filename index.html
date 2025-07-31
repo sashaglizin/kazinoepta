@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ЯжНаДэп | Казино</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;600;700&display=swap');
+
+        :root {
+            --primary: #6d28d9;
+            --secondary: #06b6d4;
+            --accent: #f59e0b;
+            --dark: #0f172a;
+            --darker: #020617;
+            --neon-purple: #c026d3;
+            --neon-green: #10b981;
+            --neon-blue: #3b82f6;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--darker);
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .neon-text {
+            text-shadow: 0 0 5px rgba(110, 40, 217, 0.8),
+                         0 0 10px rgba(110, 40, 217, 0.6),
+                         0 0 15px rgba(110, 40, 217, 0.4);
+        }
+
+        .neon-box {
+            box-shadow: 0 0 10px rgba(110, 40, 217, 0.5),
+                       inset 0 0 5px rgba(110, 40, 217, 0.3);
+        }
+
+        .neon-button {
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(110, 40, 217, 0.5);
+        }
+
+        .neon-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(110, 40, 217, 0.8);
+        }
+
+        .game-card {
+            transition: all 0.3s ease;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+
+        .game-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 10px 25px rgba(110, 40, 217, 0.4);
+        }
+
+        .banner {
+            background: radial-gradient(circle at center, rgba(109, 40, 217, 0.3) 0%, rgba(2, 6, 23, 0.9) 70%);
+            animation: pulse 6s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% {
+                background-size: 100% 100%;
+            }
+            100% {
+                background-size: 120% 120%;
+            }
+        }
+
+        .slot-machine {
+            animation: spin 8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .nav-link {
+            position: relative;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--neon-purple);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .chip {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .chip:nth-child(2) {
+            animation-delay: 0.5s;
+        }
+
+        .chip:nth-child(3) {
+            animation-delay: 1s;
+        }
+
+        /* Мобильное меню */
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 70px;
+            left: 0;
+            right: 0;
+            background: rgba(2, 6, 23, 0.98);
+            z-index: 40;
+            padding: 20px;
+            border-bottom: 2px solid rgba(110, 40, 217, 0.5);
+            backdrop-filter: blur(10px);
+            max-height: calc(100vh - 70px);
+            overflow-y: auto;
+        }
+
+        .mobile-menu.active {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .balance-display {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(109, 40, 217, 0.5);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+
+        .balance-amount {
+            color: var(--accent);
+            margin-left: 5px;
+        }
+
+        /* Адаптация для мобильных */
+        @media (max-width: 767px) {
+            .banner h2 {
+                font-size: 1.8rem;
+            }
+            .game-card {
+                margin-bottom: 15px;
+            }
+            .section-title {
+                font-size: 1.6rem;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Инициализация Firebase -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCDBRYFbAZzsc5K95dJQeRVSlyUeS0x2yg",
+            authDomain: "kazinaks.firebaseapp.com",
+            databaseURL: "https://kazinaks-default-rtdb.firebaseio.com",
+            projectId: "kazinaks",
+            storageBucket: "kazinaks.appspot.com",
+            messagingSenderId: "923668859204",
+            appId: "1:923668859204:web:3696ac595e106b6f226f11",
+            measurementId: "G-7CYFK7BGL0"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // Проверка статуса авторизации при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthState();
+        });
+
+        function checkAuthState() {
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    // Пользователь авторизован
+                    document.getElementById('authButtons').style.display = 'none';
+                    document.getElementById('mobileAuthButtons').style.display = 'none';
+                    document.getElementById('userSection').style.display = 'flex';
+                    document.getElementById('mobileUserSection').style.display = 'block';
+
+                    // Загружаем данные пользователя
+                    loadUserData(user.uid);
+
+                    // Настраиваем кнопки для авторизованных
+                    setupGameButtons(true);
+                } else {
+                    // Пользователь не авторизован
+                    document.getElementById('authButtons').style.display = 'flex';
+                    document.getElementById('mobileAuthButtons').style.display = 'block';
+                    document.getElementById('userSection').style.display = 'none';
+                    document.getElementById('mobileUserSection').style.display = 'none';
+
+                    // Настраиваем кнопки для неавторизованных
+                    setupGameButtons(false);
+                }
+            });
+        }
+
+        function setupGameButtons(isAuthenticated) {
+            const gameButtons = [
+                { id: 'mainPlayButton', url: 'slots.html' },
+                { id: 'classicSlotBtn', url: 'classic_slot.html' },
+                { id: 'fruitSlotBtn', url: 'fruit_slot.html' },
+                { id: 'dragonSlotBtn', url: 'dragon_slot.html' },
+                { id: 'rouletteBtn', url: 'roulette.html' },
+                { id: 'blackjackBtn', url: 'blackjack.html' },
+                { id: 'baccaratBtn', url: 'baccarat.html' },
+                { id: 'wheelBtn', url: 'wheel.html' },
+                { id: 'diceBtn', url: 'dice.html' },
+                { id: 'lotteryBtn', url: 'lottery.html' },
+                { id: 'allGamesBtn', url: 'games.html' }
+            ];
+
+            gameButtons.forEach(button => {
+                const btnElement = document.getElementById(button.id);
+                if (btnElement) {
+                    btnElement.onclick = function() {
+                        if (isAuthenticated) {
+                            window.location.href = button.url;
+                        } else {
+                            window.location.href = 'auth.html';
+                        }
+                    };
+                }
+            });
+        }
+
+        function loadUserData(userId) {
+            const userRef = database.ref('users/' + userId);
+
+            userRef.on('value', (snapshot) => {
+                const userData = snapshot.val();
+                if (userData && userData.balance) {
+                    updateBalanceDisplay(userData.balance);
+                }
+            });
+
+            setInterval(() => {
+                userRef.once('value').then((snapshot) => {
+                    const userData = snapshot.val();
+                    if (userData && userData.balance) {
+                        updateBalanceDisplay(userData.balance);
+                    }
+                });
+            }, 60000);
+        }
+
+        function updateBalanceDisplay(balance) {
+            document.getElementById('userBalance').textContent = balance;
+            document.getElementById('mobileUserBalance').textContent = balance;
+        }
+
+        function logout() {
+            auth.signOut().then(() => {
+                window.location.reload();
+            }).catch((error) => {
+                console.error('Ошибка при выходе:', error);
+            });
+        }
+
+        // Мобильное меню
+        const mobileMenuButton = document.getElementById('mobileMenuButton');
+        const mobileMenu = document.getElementById('mobileMenu');
+
+        mobileMenuButton.addEventListener('click', function() {
+            mobileMenu.classList.toggle('active');
+            this.classList.toggle('active');
+        });
+
+        document.querySelectorAll('#mobileMenu a').forEach(link => {
+            link.addEventListener('click', function() {
+                mobileMenu.classList.remove('active');
+                mobileMenuButton.classList.remove('active');
+            });
+        });
+
+        // Анимации для карточек игр
+        const gameCards = document.querySelectorAll('.game-card');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, { threshold: 0.1 });
+
+        gameCards.forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'all 0.6s ease';
+            observer.observe(card);
+        });
+
+        // Плавная прокрутка для якорей
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+
+    <!-- Header -->
+    <header class="bg-gradient-to-b from-violet-900/30 to-transparent backdrop-blur-sm fixed w-full z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <!-- Logo -->
+            <div class="flex items-center space-x-2">
+                <div class="text-3xl md:text-4xl text-yellow-400">
+                    <i class="fas fa-dragon"></i>
+                </div>
+                <h1 class="font-orbitron text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 bg-clip-text text-transparent">
+                    ЯжНаДэп
+                </h1>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="hidden md:flex space-x-8">
+                <a href="#slots" class="nav-link text-white hover:text-purple-300 font-semibold transition">Слоты</a>
+                <a href="#table" class="nav-link text-white hover:text-cyan-300 font-semibold transition">Настолки</a>
+                <a href="#mini" class="nav-link text-white hover:text-green-300 font-semibold transition">Мини игры</a>
+            </nav>
+
+            <!-- Auth Buttons (до входа) -->
+            <div id="authButtons" class="hidden md:flex items-center space-x-4">
+                <button onclick="window.location.href='auth.html?action=login'" class="px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 to-blue-500 text-white font-semibold neon-button">
+                    Войти
+                </button>
+                <button onclick="window.location.href='auth.html?action=register'" class="px-4 py-2 rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 text-gray-900 font-bold neon-button">
+                    Регистрация
+                </button>
+            </div>
+
+            <!-- User Section (после входа) -->
+            <div id="userSection" class="hidden md:flex items-center space-x-4">
+                <div class="balance-display">
+                    <i class="fas fa-coins text-yellow-400"></i>
+                    <span class="balance-amount" id="userBalance">0</span>
+                </div>
+                <button onclick="window.location.href='nas.html'" class="px-4 py-2 rounded-full bg-gray-700 hover:bg-gray-600 text-white font-semibold transition">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <button id="mobileMenuButton" class="md:hidden text-white text-2xl">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="mobile-menu">
+        <a href="#slots" class="block py-2 text-white hover:text-purple-300 font-semibold transition">Слоты</a>
+        <a href="#table" class="block py-2 text-white hover:text-cyan-300 font-semibold transition">Настолки</a>
+        <a href="#mini" class="block py-2 text-white hover:text-green-300 font-semibold transition">Мини игры</a>
+
+        <!-- Для неавторизованных -->
+        <div id="mobileAuthButtons" class="mt-4 flex flex-col space-y-3">
+            <button onclick="window.location.href='auth.html?action=login'" class="rounded-full bg-gradient-to-r from-purple-600 to-blue-500 text-white font-semibold neon-button py-2">
+                Войти
+            </button>
+            <button onclick="window.location.href='auth.html?action=register'" class="rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 text-gray-900 font-bold neon-button py-2">
+                Регистрация
+            </button>
+        </div>
+
+        <!-- Для авторизованных -->
+        <div id="mobileUserSection" class="hidden mt-4">
+            <div class="flex items-center justify-between mb-4">
+                <div class="balance-display">
+                    <i class="fas fa-coins text-yellow-400"></i>
+                    <span class="balance-amount" id="mobileUserBalance">0</span>
+                </div>
+                <button onclick="window.location.href='nas.html'" class="px-4 py-2 rounded-full bg-gray-700 hover:bg-gray-600 text-white font-semibold transition">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+            <button onclick="logout()" class="w-full py-2 rounded-full bg-red-600 hover:bg-red-700 text-white font-semibold">
+                Выйти
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="pt-16 md:pt-20">
+        <!-- Banner -->
+        <section class="banner relative overflow-hidden py-12 md:py-24">
+            <div class="container mx-auto px-4 flex flex-col md:flex-row items-center">
+                <div class="md:w-1/2 mb-8 md:mb-0 z-10">
+                    <h2 class="text-3xl md:text-6xl font-bold mb-4 font-orbitron neon-text">
+                        Играй на халяву!!! <span class="text-yellow-400">*псс делай вид что халява</span> <br>
+                        проеби <span class="text-purple-400">нах</span>!
+                    </h2>
+                    <p class="text-base md:text-lg text-gray-300 mb-6 md:mb-8">
+                        ВРЕМЯ ПРОЕБАТЬ ВСЕ ЧТО ЕСТЬ!!!
+                    </p>
+                    <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+                        <button id="mainPlayButton" class="px-4 py-3 md:px-6 md:py-3 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold text-base md:text-lg neon-button">
+                            ПРОЕБАТЬ ПРЯМО СЕЙЧАС!!!
+                        </button>
+                    </div>
+                </div>
+                <div class="md:w-1/2 flex justify-center z-10 mt-8 md:mt-0">
+                    <div class="relative">
+                        <div class="slot-machine text-6xl md:text-8xl text-yellow-400">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <div class="absolute -top-4 -left-4 md:-top-6 md:-left-6 text-3xl md:text-4xl text-purple-400 chip">
+                            <i class="fas fa-dice"></i>
+                        </div>
+                        <div class="absolute -bottom-4 -right-4 md:-bottom-6 md:-right-6 text-3xl md:text-4xl text-green-400 chip">
+                            <i class="fas fa-club"></i>
+                        </div>
+                        <div class="absolute -top-4 -right-4 md:-top-6 md:-right-6 text-3xl md:text-4xl text-red-400 chip">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <div class="absolute -bottom-4 -left-4 md:-bottom-6 md:-left-6 text-3xl md:text-4xl text-blue-400 chip">
+                            <i class="fas fa-spade"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="absolute inset-0 overflow-hidden opacity-20">
+                <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-900 via-transparent to-blue-900"></div>
+            </div>
+        </section>
+
+        <!-- Slots Section -->
+        <section id="slots" class="py-12 md:py-16 bg-gradient-to-b from-violet-900/20 to-transparent">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-8 md:mb-12">
+                    <h2 class="text-2xl md:text-4xl font-bold mb-3 md:mb-4 font-orbitron text-purple-400 neon-text">
+                        <i class="fas fa-sliders-h mr-2 md:mr-3"></i> Слоты нахуй
+                    </h2>
+                    <p class="text-sm md:text-base text-gray-400 max-w-2xl mx-auto">
+                        ПРОЕБИ ВСЕ ДЕНЬГИ НА НЕПОНЯТНЫХ КРУТЯШКАХ))))))))))))))))))))
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                    <!-- Classic Slot -->
+                    <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-purple-900/50 hover:border-purple-500/50">
+                        <div class="flex justify-center mb-4 md:mb-6">
+                            <div class="text-5xl md:text-6xl text-yellow-400">
+                                <i class="fas fa-gem"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Класический способ проебать</h3>
+                        <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
+                            Крутилка как крутилка, даже сказать нечего
+                        </p>
+                        <button id="classicSlotBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-purple-600 to-blue-500 text-white font-semibold neon-button">
+                            проебать :)
+                        </button>
+                    </div>
+
+                    <!-- Fruit Slot -->
+                    <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-green-900/50 hover:border-green-500/50">
+                        <div class="flex justify-center mb-4 md:mb-6">
+                            <div class="text-5xl md:text-6xl text-green-400">
+                                <i class="fas fa-apple-alt"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Фруктовая крутилочка</h3>
+                        <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
+                            5 крутилок с фруктами
+                        </p>
+                        <button id="fruitSlotBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-green-600 to-teal-500 text-white font-semibold neon-button">
+                            Проебать с помощью яблок)
+                        </button>
+                    </div>
+
+                    <!-- Video Slot -->
+                    <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-blue-900/50 hover:border-blue-500/50">
+                        <div class="flex justify-center mb-4 md:mb-6">
+                            <div class="text-5xl md:text-6xl text-blue-400">
+                                <i class="fas fa-film"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Проеби с помощью дракона)</h3>
+                        <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
+                            ДРАКОНЫ БЛЯТЬ НАХУЙ АААААААААААААА
+                        </p>
+                        <button id="dragonSlotBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold neon-button">
+                            Похуй погнали
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Table Games Section -->
+        <section id="table" class="py-12 md:py-16 bg-gradient-to-b from-blue-900/20 to-transparent">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-8 md:mb-12">
+                    <h2 class="text-2xl md:text-4xl font-bold mb-3 md:mb-4 font-orbitron text-blue-400 neon-text">
+                        <i class="fas fa-chess-board mr-2 md:mr-3"></i> Настольные игры
+                    </h2>
+                    <p class="text-sm md:text-base text-gray-400 max-w-2xl mx-auto">
+                        Твоя стратегия и удача против наших алгоритмов!
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                    <!-- Roulette -->
+                    <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-red-900/50 hover:border-red-500/50">
+                        <div class="flex justify-center mb-4 md:mb-6">
+                            <div class="text-5xl md:text-6xl text-red-400">
+                                <i class="fas fa-dharmachakra"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Рулетка</h3>
+                        <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
+                            Ставь на удачу и крути колесо!
+                        </p>
+                        <button id="rouletteBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-red-600 to-pink-500 text-white font-semibold neon-button">
+                            Крутить
+                        </button>
+                    </div>
+
+                    <!-- Blackjack -->
+                    <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-yellow-900/50 hover:border-yellow-500/50">
+                        <div class="flex justify-center mb-4 md:mb-6">
+                            <div class="text-5xl md:text-6xl text-yellow-400">
+                                <i class="fas fa-club"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Блэкджек</h3>
+                        <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
+                            Обыграй дилера в этой классической игре
+                        </p>
+                        <button id="blackjackBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-yellow-600 to-orange-500 text-gray-900 font-semibold neon-button">
+                            Играть
+                        </button>
+                    </div>
+
+                    <!-- Baccarat -->
+                    <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-green-900/50 hover:border-green-500/50">
+                        <div class="flex justify-center mb-4 md:mb-6">
+                            <div class="text-5xl md:text-6xl text-green-400">
+                                <i class="fas fa-gem"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Баккара</h3>
+                        <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
+                            Элегантная игра с простыми правилами
+                        </p>
+                        <button id="baccaratBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-green-600 to-emerald-500 text-white font-semibold neon-button">
+                            Ставки!
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Mini Games Section -->
+        <section id="mini" class="py-12 md:py-16 bg-gradient-to-b from-emerald-900/20 to-transparent">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-8 md:mb-12">
+                    <h2 class="text-2xl md:text-4xl font-bold mb-3 md:mb-4 font-orbitron text-green-400 neon-text">
+                        <i class="fas fa-gamepad mr-2 md:mr-3"></i> Мини игры
+                    </h2>
+                    <p class="text-sm md:text-base text-gray-400 max-w-2xl mx-auto">
+                        Быстрые и простые игры для моментального выигрыша!
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                    <!-- Wheel of Fortune -->
+                    <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-purple-900/50 hover:border-purple-500/50">
+                        <div class="flex justify-center mb-4 md:mb-6">
+                            <div class="text-5xl md:text-6xl text-purple-400">
+                                <i class="fas fa-life-ring"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Колесо фортуны</h3>
+                        <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
+                            Крути колесо для мгновенных призов
+                        </p>
+                        <button id="wheelBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-500 text-white font-semibold neon-button">
+                            Крутить
+                        </button>
+                    </div>
+
+                    <!-- Dice -->
+                    <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-yellow-900/50 hover:border-yellow-500/50">
+                        <div class="flex justify-center mb-4 md:mb-6">
+                            <div class="text-5xl md:text-6xl text-yellow-400">
+                                <i class="fas fa-dice"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Кости</h3>
+                        <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
+                            Бросай кости и выигрывай по-крупному
+                        </p>
+                        <button id="diceBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-yellow-600 to-amber-500 text-gray-900 font-semibold neon-button">
+                            Бросить
+                        </button>
+                    </div>
+
+                    <!-- Lottery -->
+                    <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-blue-900/50 hover:border-blue-500/50">
+                        <div class="flex justify-center mb-4 md:mb-6">
+                            <div class="text-5xl md:text-6xl text-blue-400">
+                                <i class="fas fa-ticket-alt"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Лотерея</h3>
+                        <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
+                            Почеши билет и выиграй приз
+                        </p>
+                        <button id="lotteryBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-blue-600 to-sky-500 text-white font-semibold neon-button">
+                            Играть
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 border-t border-gray-800 py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <div class="text-3xl text-yellow-400">
+                            <i class="fas fa-dragon"></i>
+                        </div>
+                        <h3 class="font-orbitron text-xl font-bold bg-gradient-to-r from-purple-500 to-yellow-500 bg-clip-text text-transparent">
+                            ЯжНаДэп
+                        </h3>
+                    </div>
+                    <p class="text-gray-400">
+                        Лучшее казино для тех, кто любит рисковать! Наверное ;)
+                    </p>
+                </div>
+
+                <div>
+                    <h4 class="text-lg font-semibold text-white mb-4">Игры</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#slots" class="text-gray-400 hover:text-purple-400 transition">Слоты</a></li>
+                        <li><a href="#table" class="text-gray-400 hover:text-blue-400 transition">Настолки</a></li>
+                        <li><a href="#mini" class="text-gray-400 hover:text-green-400 transition">Мини игры</a></li>
+                    </ul>
+                </div>
+
+
+                <div>
+                    <h4 class="text-lg font-semibold text-white mb-4">Контакты</h4>
+                    <div class="flex space-x-4 mb-4">
+                      <div class="flex space-x-4 mb-4">
+                          <a href="https://t.me/your_telegram_link" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-blue-400 hover:bg-blue-900 transition">
+                              <i class="fab fa-telegram-plane"></i>
+                          </a>
+                      </div>
+                    <p class="text-gray-500 text-sm">
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
