@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ЯжНаДэп | Казино</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Firebase SDK -->
@@ -180,59 +179,6 @@
                 font-size: 1.6rem;
             }
         }
-
-        /* Стили для страницы пополнения */
-        .deposit-container {
-            max-width: 500px;
-            margin: 2rem auto;
-            padding: 2rem;
-            background: rgba(15, 23, 42, 0.8);
-            border-radius: 10px;
-            border: 1px solid rgba(109, 40, 217, 0.5);
-        }
-
-        .deposit-input {
-            width: 100%;
-            padding: 0.75rem;
-            margin-bottom: 1rem;
-            background: rgba(30, 41, 59, 0.5);
-            border: 1px solid rgba(109, 40, 217, 0.3);
-            border-radius: 5px;
-            color: white;
-            font-size: 1rem;
-        }
-
-        .deposit-input:focus {
-            outline: none;
-            border-color: rgba(109, 40, 217, 0.8);
-        }
-
-        .deposit-button {
-            width: 100%;
-            padding: 0.75rem;
-            background: linear-gradient(to right, #6d28d9, #4c1d95);
-            border: none;
-            border-radius: 5px;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .deposit-button:hover {
-            background: linear-gradient(to right, #7c3aed, #5b21b6);
-        }
-
-        .deposit-success {
-            text-align: center;
-            padding: 2rem;
-        }
-
-        .deposit-success-icon {
-            font-size: 3rem;
-            color: #10b981;
-            margin-bottom: 1rem;
-        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -256,55 +202,7 @@
         // Проверка статуса авторизации при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
             checkAuthState();
-
-            // Проверяем, если это страница пополнения
-            if (window.location.pathname.includes('/deposit')) {
-                initDepositPage();
-            }
         });
-
-        function initDepositPage() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const userId = urlParams.get('user_id');
-
-            if (!userId) {
-                document.body.innerHTML = '<div class="deposit-container"><div class="text-red-500 text-center">Ошибка: не указан ID пользователя</div></div>';
-                return;
-            }
-
-            document.getElementById('depositForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-
-                const amount = parseFloat(document.getElementById('amount').value);
-                if (isNaN(amount) {
-                    alert('Пожалуйста, введите корректную сумму');
-                    return;
-                }
-
-                // Отправляем данные в бота
-                const data = {
-                    user_id: userId,
-                    amount: amount
-                };
-
-                // Показываем сообщение об успехе
-                document.getElementById('depositForm').style.display = 'none';
-                document.getElementById('successMessage').style.display = 'block';
-                document.getElementById('depositAmount').textContent = amount.toFixed(2);
-
-                // Отправляем данные в Telegram бота
-                if (window.Telegram && window.Telegram.WebApp) {
-                    window.Telegram.WebApp.sendData(JSON.stringify(data));
-
-                    // Закрываем WebApp через 3 секунды
-                    setTimeout(() => {
-                        if (window.Telegram && window.Telegram.WebApp) {
-                            window.Telegram.WebApp.close();
-                        }
-                    }, 3000);
-                }
-            });
-        }
 
         function checkAuthState() {
             auth.onAuthStateChanged((user) => {
@@ -440,396 +338,365 @@
         });
     </script>
 
-    <!-- Проверяем, если это страница пополнения -->
-    <script>
-        if (window.location.pathname.includes('/deposit')) {
-            document.body.innerHTML = `
-                <div class="deposit-container">
-                    <h2 class="text-2xl font-bold mb-6 text-center text-purple-400">💰 Пополнение баланса</h2>
-
-                    <form id="depositForm">
-                        <div class="mb-4">
-                            <label for="amount" class="block mb-2">Сумма пополнения:</label>
-                            <input type="number" id="amount" class="deposit-input" placeholder="Введите сумму" min="1" step="0.01" required>
-                        </div>
-                        <button type="submit" class="deposit-button neon-button">Пополнить баланс</button>
-                    </form>
-
-                    <div id="successMessage" style="display: none;" class="deposit-success">
-                        <div class="deposit-success-icon">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <h3 class="text-xl font-bold mb-2">Успешно!</h3>
-                        <p class="mb-4">Ваш баланс пополнен на <span id="depositAmount" class="font-bold text-yellow-400">0</span> звёзд</p>
-                        <p>Вы будете перенаправлены обратно в бота...</p>
-                    </div>
+    <!-- Header -->
+    <header class="bg-gradient-to-b from-violet-900/30 to-transparent backdrop-blur-sm fixed w-full z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <!-- Logo -->
+            <div class="flex items-center space-x-2">
+                <div class="text-3xl md:text-4xl text-yellow-400">
+                    <i class="fas fa-dragon"></i>
                 </div>
-            `;
-        } else {
-            // Оригинальный код страницы
-            document.write(`
-                <!-- Header -->
-                <header class="bg-gradient-to-b from-violet-900/30 to-transparent backdrop-blur-sm fixed w-full z-50">
-                    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-                        <!-- Logo -->
-                        <div class="flex items-center space-x-2">
-                            <div class="text-3xl md:text-4xl text-yellow-400">
-                                <i class="fas fa-dragon"></i>
-                            </div>
-                            <h1 class="font-orbitron text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 bg-clip-text text-transparent">
-                                ЯжНаДэп
-                            </h1>
-                        </div>
+                <h1 class="font-orbitron text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 bg-clip-text text-transparent">
+                    ЯжНаДэп
+                </h1>
+            </div>
 
-                        <!-- Navigation -->
-                        <nav class="hidden md:flex space-x-8">
-                            <a href="#slots" class="nav-link text-white hover:text-purple-300 font-semibold transition">Слоты</a>
-                            <a href="#table" class="nav-link text-white hover:text-cyan-300 font-semibold transition">Настолки</a>
-                            <a href="#mini" class="nav-link text-white hover:text-green-300 font-semibold transition">Мини игры</a>
-                        </nav>
+            <!-- Navigation -->
+            <nav class="hidden md:flex space-x-8">
+                <a href="#slots" class="nav-link text-white hover:text-purple-300 font-semibold transition">Слоты</a>
+                <a href="#table" class="nav-link text-white hover:text-cyan-300 font-semibold transition">Настолки</a>
+                <a href="#mini" class="nav-link text-white hover:text-green-300 font-semibold transition">Мини игры</a>
+            </nav>
 
-                        <!-- Auth Buttons (до входа) -->
-                        <div id="authButtons" class="hidden md:flex items-center space-x-4">
-                            <button onclick="window.location.href='auth.html?action=login'" class="px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 to-blue-500 text-white font-semibold neon-button">
-                                Войти
-                            </button>
-                            <button onclick="window.location.href='auth.html?action=register'" class="px-4 py-2 rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 text-gray-900 font-bold neon-button">
-                                Регистрация
-                            </button>
-                        </div>
+            <!-- Auth Buttons (до входа) -->
+            <div id="authButtons" class="hidden md:flex items-center space-x-4">
+                <button onclick="window.location.href='auth.html?action=login'" class="px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 to-blue-500 text-white font-semibold neon-button">
+                    Войти
+                </button>
+                <button onclick="window.location.href='auth.html?action=register'" class="px-4 py-2 rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 text-gray-900 font-bold neon-button">
+                    Регистрация
+                </button>
+            </div>
 
-                        <!-- User Section (после входа) -->
-                        <div id="userSection" class="hidden md:flex items-center space-x-4">
-                            <div class="balance-display">
-                                <i class="fas fa-coins text-yellow-400"></i>
-                                <span class="balance-amount" id="userBalance">0</span>
-                            </div>
-                            <button onclick="window.location.href='nas.html'" class="px-4 py-2 rounded-full bg-gray-700 hover:bg-gray-600 text-white font-semibold transition">
-                                <i class="fas fa-cog"></i>
-                            </button>
-                        </div>
+            <!-- User Section (после входа) -->
+            <div id="userSection" class="hidden md:flex items-center space-x-4">
+                <div class="balance-display">
+                    <i class="fas fa-coins text-yellow-400"></i>
+                    <span class="balance-amount" id="userBalance">0</span>
+                </div>
+                <button onclick="window.location.href='nas.html'" class="px-4 py-2 rounded-full bg-gray-700 hover:bg-gray-600 text-white font-semibold transition">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
 
-                        <!-- Mobile Menu Button -->
-                        <button id="mobileMenuButton" class="md:hidden text-white text-2xl">
-                            <i class="fas fa-bars"></i>
-                        </button>
-                    </div>
-                </header>
+            <!-- Mobile Menu Button -->
+            <button id="mobileMenuButton" class="md:hidden text-white text-2xl">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </header>
 
-                <!-- Mobile Menu -->
-                <div id="mobileMenu" class="mobile-menu">
-                    <a href="#slots" class="block py-2 text-white hover:text-purple-300 font-semibold transition">Слоты</a>
-                    <a href="#table" class="block py-2 text-white hover:text-cyan-300 font-semibold transition">Настолки</a>
-                    <a href="#mini" class="block py-2 text-white hover:text-green-300 font-semibold transition">Мини игры</a>
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="mobile-menu">
+        <a href="#slots" class="block py-2 text-white hover:text-purple-300 font-semibold transition">Слоты</a>
+        <a href="#table" class="block py-2 text-white hover:text-cyan-300 font-semibold transition">Настолки</a>
+        <a href="#mini" class="block py-2 text-white hover:text-green-300 font-semibold transition">Мини игры</a>
 
-                    <!-- Для неавторизованных -->
-                    <div id="mobileAuthButtons" class="mt-4 flex flex-col space-y-3">
-                        <button onclick="window.location.href='auth.html?action=login'" class="rounded-full bg-gradient-to-r from-purple-600 to-blue-500 text-white font-semibold neon-button py-2">
-                            Войти
-                        </button>
-                        <button onclick="window.location.href='auth.html?action=register'" class="rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 text-gray-900 font-bold neon-button py-2">
-                            Регистрация
-                        </button>
-                    </div>
+        <!-- Для неавторизованных -->
+        <div id="mobileAuthButtons" class="mt-4 flex flex-col space-y-3">
+            <button onclick="window.location.href='auth.html?action=login'" class="rounded-full bg-gradient-to-r from-purple-600 to-blue-500 text-white font-semibold neon-button py-2">
+                Войти
+            </button>
+            <button onclick="window.location.href='auth.html?action=register'" class="rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 text-gray-900 font-bold neon-button py-2">
+                Регистрация
+            </button>
+        </div>
 
-                    <!-- Для авторизованных -->
-                    <div id="mobileUserSection" class="hidden mt-4">
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="balance-display">
-                                <i class="fas fa-coins text-yellow-400"></i>
-                                <span class="balance-amount" id="mobileUserBalance">0</span>
-                            </div>
-                            <button onclick="window.location.href='nas.html'" class="px-4 py-2 rounded-full bg-gray-700 hover:bg-gray-600 text-white font-semibold transition">
-                                <i class="fas fa-cog"></i>
-                            </button>
-                        </div>
-                        <button onclick="logout()" class="w-full py-2 rounded-full bg-red-600 hover:bg-red-700 text-white font-semibold">
-                            Выйти
+        <!-- Для авторизованных -->
+        <div id="mobileUserSection" class="hidden mt-4">
+            <div class="flex items-center justify-between mb-4">
+                <div class="balance-display">
+                    <i class="fas fa-coins text-yellow-400"></i>
+                    <span class="balance-amount" id="mobileUserBalance">0</span>
+                </div>
+                <button onclick="window.location.href='nas.html'" class="px-4 py-2 rounded-full bg-gray-700 hover:bg-gray-600 text-white font-semibold transition">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+            <button onclick="logout()" class="w-full py-2 rounded-full bg-red-600 hover:bg-red-700 text-white font-semibold">
+                Выйти
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="pt-16 md:pt-20">
+        <!-- Banner -->
+        <section class="banner relative overflow-hidden py-12 md:py-24">
+            <div class="container mx-auto px-4 flex flex-col md:flex-row items-center">
+                <div class="md:w-1/2 mb-8 md:mb-0 z-10">
+                    <h2 class="text-3xl md:text-6xl font-bold mb-4 font-orbitron neon-text">
+                        Играй на халяву!!! <span class="text-yellow-400">*псс делай вид что халява</span> <br>
+                        проеби <span class="text-purple-400">нах</span>!
+                    </h2>
+                    <p class="text-base md:text-lg text-gray-300 mb-6 md:mb-8">
+                        ВРЕМЯ ПРОЕБАТЬ ВСЕ ЧТО ЕСТЬ!!!
+                    </p>
+                    <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+                        <button id="mainPlayButton" class="px-4 py-3 md:px-6 md:py-3 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold text-base md:text-lg neon-button">
+                            ПРОЕБАТЬ ПРЯМО СЕЙЧАС!!!
                         </button>
                     </div>
                 </div>
-
-                <!-- Main Content -->
-                <main class="pt-16 md:pt-20">
-                    <!-- Banner -->
-                    <section class="banner relative overflow-hidden py-12 md:py-24">
-                        <div class="container mx-auto px-4 flex flex-col md:flex-row items-center">
-                            <div class="md:w-1/2 mb-8 md:mb-0 z-10">
-                                <h2 class="text-3xl md:text-6xl font-bold mb-4 font-orbitron neon-text">
-                                    Играй на халяву!!! <span class="text-yellow-400">*псс делай вид что халява</span> <br>
-                                    проеби <span class="text-purple-400">нах</span>!
-                                </h2>
-                                <p class="text-base md:text-lg text-gray-300 mb-6 md:mb-8">
-                                    ВРЕМЯ ПРОЕБАТЬ ВСЕ ЧТО ЕСТЬ!!!
-                                </p>
-                                <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-                                    <button id="mainPlayButton" class="px-4 py-3 md:px-6 md:py-3 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold text-base md:text-lg neon-button">
-                                        ПРОЕБАТЬ ПРЯМО СЕЙЧАС!!!
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="md:w-1/2 flex justify-center z-10 mt-8 md:mt-0">
-                                <div class="relative">
-                                    <div class="slot-machine text-6xl md:text-8xl text-yellow-400">
-                                        <i class="fas fa-coins"></i>
-                                    </div>
-                                    <div class="absolute -top-4 -left-4 md:-top-6 md:-left-6 text-3xl md:text-4xl text-purple-400 chip">
-                                        <i class="fas fa-dice"></i>
-                                    </div>
-                                    <div class="absolute -bottom-4 -right-4 md:-bottom-6 md:-right-6 text-3xl md:text-4xl text-green-400 chip">
-                                        <i class="fas fa-club"></i>
-                                    </div>
-                                    <div class="absolute -top-4 -right-4 md:-top-6 md:-right-6 text-3xl md:text-4xl text-red-400 chip">
-                                        <i class="fas fa-heart"></i>
-                                    </div>
-                                    <div class="absolute -bottom-4 -left-4 md:-bottom-6 md:-left-6 text-3xl md:text-4xl text-blue-400 chip">
-                                        <i class="fas fa-spade"></i>
-                                    </div>
-                                </div>
-                            </div>
+                <div class="md:w-1/2 flex justify-center z-10 mt-8 md:mt-0">
+                    <div class="relative">
+                        <div class="slot-machine text-6xl md:text-8xl text-yellow-400">
+                            <i class="fas fa-coins"></i>
                         </div>
-                        <div class="absolute inset-0 overflow-hidden opacity-20">
-                            <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-900 via-transparent to-blue-900"></div>
+                        <div class="absolute -top-4 -left-4 md:-top-6 md:-left-6 text-3xl md:text-4xl text-purple-400 chip">
+                            <i class="fas fa-dice"></i>
                         </div>
-                    </section>
-
-                    <!-- Slots Section -->
-                    <section id="slots" class="py-12 md:py-16 bg-gradient-to-b from-violet-900/20 to-transparent">
-                        <div class="container mx-auto px-4">
-                            <div class="text-center mb-8 md:mb-12">
-                                <h2 class="text-2xl md:text-4xl font-bold mb-3 md:mb-4 font-orbitron text-purple-400 neon-text">
-                                    <i class="fas fa-sliders-h mr-2 md:mr-3"></i> Слоты нахуй
-                                </h2>
-                                <p class="text-sm md:text-base text-gray-400 max-w-2xl mx-auto">
-                                    ПРОЕБИ ВСЕ ДЕНЬГИ НА НЕПОНЯТНЫХ КРУТЯШКАХ))))))))))))))))))))
-                                </p>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                                <!-- Classic Slot -->
-                                <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-purple-900/50 hover:border-purple-500/50">
-                                    <div class="flex justify-center mb-4 md:mb-6">
-                                        <div class="text-5xl md:text-6xl text-yellow-400">
-                                            <i class="fas fa-gem"></i>
-                                        </div>
-                                    </div>
-                                    <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Класический способ проебать</h3>
-                                    <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
-                                        Крутилка как крутилка, даже сказать нечего
-                                    </p>
-                                    <button id="classicSlotBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-purple-600 to-blue-500 text-white font-semibold neon-button">
-                                        проебать :)
-                                    </button>
-                                </div>
-
-                                <!-- Fruit Slot -->
-                                <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-green-900/50 hover:border-green-500/50">
-                                    <div class="flex justify-center mb-4 md:mb-6">
-                                        <div class="text-5xl md:text-6xl text-green-400">
-                                            <i class="fas fa-apple-alt"></i>
-                                        </div>
-                                    </div>
-                                    <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Фруктовая крутилочка</h3>
-                                    <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
-                                        5 крутилок с фруктами
-                                    </p>
-                                    <button id="fruitSlotBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-green-600 to-teal-500 text-white font-semibold neon-button">
-                                        Проебать с помощью яблок)
-                                    </button>
-                                </div>
-
-                                <!-- Video Slot -->
-                                <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-blue-900/50 hover:border-blue-500/50">
-                                    <div class="flex justify-center mb-4 md:mb-6">
-                                        <div class="text-5xl md:text-6xl text-blue-400">
-                                            <i class="fas fa-film"></i>
-                                        </div>
-                                    </div>
-                                    <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Проеби с помощью дракона)</h3>
-                                    <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
-                                        ДРАКОНЫ БЛЯТЬ НАХУЙ АААААААААААААА
-                                    </p>
-                                    <button id="dragonSlotBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold neon-button">
-                                        Похуй погнали
-                                    </button>
-                                </div>
-                            </div>
+                        <div class="absolute -bottom-4 -right-4 md:-bottom-6 md:-right-6 text-3xl md:text-4xl text-green-400 chip">
+                            <i class="fas fa-club"></i>
                         </div>
-                    </section>
-
-                    <!-- Table Games Section -->
-                    <section id="table" class="py-12 md:py-16 bg-gradient-to-b from-blue-900/20 to-transparent">
-                        <div class="container mx-auto px-4">
-                            <div class="text-center mb-8 md:mb-12">
-                                <h2 class="text-2xl md:text-4xl font-bold mb-3 md:mb-4 font-orbitron text-blue-400 neon-text">
-                                    <i class="fas fa-chess-board mr-2 md:mr-3"></i> Настольные игры
-                                </h2>
-                                <p class="text-sm md:text-base text-gray-400 max-w-2xl mx-auto">
-                                    Твоя стратегия и удача против наших алгоритмов!
-                                </p>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                                <!-- Roulette -->
-                                <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-red-900/50 hover:border-red-500/50">
-                                    <div class="flex justify-center mb-4 md:mb-6">
-                                        <div class="text-5xl md:text-6xl text-red-400">
-                                            <i class="fas fa-dharmachakra"></i>
-                                        </div>
-                                    </div>
-                                    <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Рулетка</h3>
-                                    <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
-                                        Ставь на удачу и крути колесо!
-                                    </p>
-                                    <button id="rouletteBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-red-600 to-pink-500 text-white font-semibold neon-button">
-                                        Крутить
-                                    </button>
-                                </div>
-
-                                <!-- Blackjack -->
-                                <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-yellow-900/50 hover:border-yellow-500/50">
-                                    <div class="flex justify-center mb-4 md:mb-6">
-                                        <div class="text-5xl md:text-6xl text-yellow-400">
-                                            <i class="fas fa-club"></i>
-                                        </div>
-                                    </div>
-                                    <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Блэкджек</h3>
-                                    <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
-                                        Обыграй дилера в этой классической игре
-                                    </p>
-                                    <button id="blackjackBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-yellow-600 to-orange-500 text-gray-900 font-semibold neon-button">
-                                        Играть
-                                    </button>
-                                </div>
-
-                                <!-- Baccarat -->
-                                <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-green-900/50 hover:border-green-500/50">
-                                    <div class="flex justify-center mb-4 md:mb-6">
-                                        <div class="text-5xl md:text-6xl text-green-400">
-                                            <i class="fas fa-gem"></i>
-                                        </div>
-                                    </div>
-                                    <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Баккара</h3>
-                                    <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
-                                        Элегантная игра с простыми правилами
-                                    </p>
-                                    <button id="baccaratBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-green-600 to-emerald-500 text-white font-semibold neon-button">
-                                        Ставки!
-                                    </button>
-                                </div>
-                            </div>
+                        <div class="absolute -top-4 -right-4 md:-top-6 md:-right-6 text-3xl md:text-4xl text-red-400 chip">
+                            <i class="fas fa-heart"></i>
                         </div>
-                    </section>
-
-                    <!-- Mini Games Section -->
-                    <section id="mini" class="py-12 md:py-16 bg-gradient-to-b from-emerald-900/20 to-transparent">
-                        <div class="container mx-auto px-4">
-                            <div class="text-center mb-8 md:mb-12">
-                                <h2 class="text-2xl md:text-4xl font-bold mb-3 md:mb-4 font-orbitron text-green-400 neon-text">
-                                    <i class="fas fa-gamepad mr-2 md:mr-3"></i> Мини игры
-                                </h2>
-                                <p class="text-sm md:text-base text-gray-400 max-w-2xl mx-auto">
-                                    Быстрые и простые игры для моментального выигрыша!
-                                </p>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                                <!-- Wheel of Fortune -->
-                                <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-purple-900/50 hover:border-purple-500/50">
-                                    <div class="flex justify-center mb-4 md:mb-6">
-                                        <div class="text-5xl md:text-6xl text-purple-400">
-                                            <i class="fas fa-life-ring"></i>
-                                        </div>
-                                    </div>
-                                    <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Колесо фортуны</h3>
-                                    <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
-                                        Крути колесо для мгновенных призов
-                                    </p>
-                                    <button id="wheelBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-500 text-white font-semibold neon-button">
-                                        Крутить
-                                    </button>
-                                </div>
-
-                                <!-- Dice -->
-                                <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-yellow-900/50 hover:border-yellow-500/50">
-                                    <div class="flex justify-center mb-4 md:mb-6">
-                                        <div class="text-5xl md:text-6xl text-yellow-400">
-                                            <i class="fas fa-dice"></i>
-                                        </div>
-                                    </div>
-                                    <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Кости</h3>
-                                    <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
-                                        Бросай кости и выигрывай по-крупному
-                                    </p>
-                                    <button id="diceBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-yellow-600 to-amber-500 text-gray-900 font-semibold neon-button">
-                                        Бросить
-                                    </button>
-                                </div>
-
-                                <!-- Lottery -->
-                                <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-blue-900/50 hover:border-blue-500/50">
-                                    <div class="flex justify-center mb-4 md:mb-6">
-                                        <div class="text-5xl md:text-6xl text-blue-400">
-                                            <i class="fas fa-ticket-alt"></i>
-                                        </div>
-                                    </div>
-                                    <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Лотерея</h3>
-                                    <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
-                                        Почеши билет и выиграй приз
-                                    </p>
-                                    <button id="lotteryBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-blue-600 to-sky-500 text-white font-semibold neon-button">
-                                        Играть
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                </main>
-
-                <!-- Footer -->
-                <footer class="bg-gray-900 border-t border-gray-800 py-12">
-                    <div class="container mx-auto px-4">
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                            <div>
-                                <div class="flex items-center space-x-2 mb-4">
-                                    <div class="text-3xl text-yellow-400">
-                                        <i class="fas fa-dragon"></i>
-                                    </div>
-                                    <h3 class="font-orbitron text-xl font-bold bg-gradient-to-r from-purple-500 to-yellow-500 bg-clip-text text-transparent">
-                                        ЯжНаДэп
-                                    </h3>
-                                </div>
-                                <p class="text-gray-400">
-                                    Лучшее казино для тех, кто любит рисковать! Наверное ;)
-                                </p>
-                            </div>
-
-                            <div>
-                                <h4 class="text-lg font-semibold text-white mb-4">Игры</h4>
-                                <ul class="space-y-2">
-                                    <li><a href="#slots" class="text-gray-400 hover:text-purple-400 transition">Слоты</a></li>
-                                    <li><a href="#table" class="text-gray-400 hover:text-blue-400 transition">Настолки</a></li>
-                                    <li><a href="#mini" class="text-gray-400 hover:text-green-400 transition">Мини игры</a></li>
-                                </ul>
-                            </div>
-
-
-                            <div>
-                                <h4 class="text-lg font-semibold text-white mb-4">Контакты</h4>
-                                <div class="flex space-x-4 mb-4">
-                                  <div class="flex space-x-4 mb-4">
-                                      <a href="https://t.me/your_telegram_link" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-blue-400 hover:bg-blue-900 transition">
-                                          <i class="fab fa-telegram-plane"></i>
-                                      </a>
-                                  </div>
-                                <p class="text-gray-500 text-sm">
-                                </p>
-                            </div>
+                        <div class="absolute -bottom-4 -left-4 md:-bottom-6 md:-left-6 text-3xl md:text-4xl text-blue-400 chip">
+                            <i class="fas fa-spade"></i>
                         </div>
                     </div>
-                </footer>
-            `);
-        }
-    </script>
+                </div>
+            </div>
+            <div class="absolute inset-0 overflow-hidden opacity-20">
+                <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-900 via-transparent to-blue-900"></div>
+            </div>
+        </section>
+
+        <!-- Slots Section -->
+        <section id="slots" class="py-12 md:py-16 bg-gradient-to-b from-violet-900/20 to-transparent">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-8 md:mb-12">
+                    <h2 class="text-2xl md:text-4xl font-bold mb-3 md:mb-4 font-orbitron text-purple-400 neon-text">
+                        <i class="fas fa-sliders-h mr-2 md:mr-3"></i> Слоты нахуй
+                    </h2>
+                    <p class="text-sm md:text-base text-gray-400 max-w-2xl mx-auto">
+                        ПРОЕБИ ВСЕ ДЕНЬГИ НА НЕПОНЯТНЫХ КРУТЯШКАХ))))))))))))))))))))
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                    <!-- Classic Slot -->
+                    <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-purple-900/50 hover:border-purple-500/50">
+                        <div class="flex justify-center mb-4 md:mb-6">
+                            <div class="text-5xl md:text-6xl text-yellow-400">
+                                <i class="fas fa-gem"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Класический способ проебать</h3>
+                        <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
+                            Крутилка как крутилка, даже сказать нечего
+                        </p>
+                        <button id="classicSlotBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-purple-600 to-blue-500 text-white font-semibold neon-button">
+                            проебать :)
+                        </button>
+                    </div>
+
+                    <!-- Fruit Slot -->
+                    <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-green-900/50 hover:border-green-500/50">
+                        <div class="flex justify-center mb-4 md:mb-6">
+                            <div class="text-5xl md:text-6xl text-green-400">
+                                <i class="fas fa-apple-alt"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Фруктовая крутилочка</h3>
+                        <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
+                            5 крутилок с фруктами
+                        </p>
+                        <button id="fruitSlotBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-green-600 to-teal-500 text-white font-semibold neon-button">
+                            Проебать с помощью яблок)
+                        </button>
+                    </div>
+
+                    <!-- Video Slot -->
+                    <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-blue-900/50 hover:border-blue-500/50">
+                        <div class="flex justify-center mb-4 md:mb-6">
+                            <div class="text-5xl md:text-6xl text-blue-400">
+                                <i class="fas fa-film"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Проеби с помощью дракона)</h3>
+                        <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
+                            ДРАКОНЫ БЛЯТЬ НАХУЙ АААААААААААААА
+                        </p>
+                        <button id="dragonSlotBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold neon-button">
+                            Похуй погнали
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Table Games Section -->
+        <section id="table" class="py-12 md:py-16 bg-gradient-to-b from-blue-900/20 to-transparent">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-8 md:mb-12">
+                    <h2 class="text-2xl md:text-4xl font-bold mb-3 md:mb-4 font-orbitron text-blue-400 neon-text">
+                        <i class="fas fa-chess-board mr-2 md:mr-3"></i> Настольные игры
+                    </h2>
+                    <p class="text-sm md:text-base text-gray-400 max-w-2xl mx-auto">
+                        Твоя стратегия и удача против наших алгоритмов!
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                    <!-- Roulette -->
+                    <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-red-900/50 hover:border-red-500/50">
+                        <div class="flex justify-center mb-4 md:mb-6">
+                            <div class="text-5xl md:text-6xl text-red-400">
+                                <i class="fas fa-dharmachakra"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Рулетка</h3>
+                        <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
+                            Ставь на удачу и крути колесо!
+                        </p>
+                        <button id="rouletteBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-red-600 to-pink-500 text-white font-semibold neon-button">
+                            Крутить
+                        </button>
+                    </div>
+
+                    <!-- Blackjack -->
+                    <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-yellow-900/50 hover:border-yellow-500/50">
+                        <div class="flex justify-center mb-4 md:mb-6">
+                            <div class="text-5xl md:text-6xl text-yellow-400">
+                                <i class="fas fa-club"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Блэкджек</h3>
+                        <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
+                            Обыграй дилера в этой классической игре
+                        </p>
+                        <button id="blackjackBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-yellow-600 to-orange-500 text-gray-900 font-semibold neon-button">
+                            Играть
+                        </button>
+                    </div>
+
+                    <!-- Baccarat -->
+                    <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-green-900/50 hover:border-green-500/50">
+                        <div class="flex justify-center mb-4 md:mb-6">
+                            <div class="text-5xl md:text-6xl text-green-400">
+                                <i class="fas fa-gem"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Баккара</h3>
+                        <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
+                            Элегантная игра с простыми правилами
+                        </p>
+                        <button id="baccaratBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-green-600 to-emerald-500 text-white font-semibold neon-button">
+                            Ставки!
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Mini Games Section -->
+        <section id="mini" class="py-12 md:py-16 bg-gradient-to-b from-emerald-900/20 to-transparent">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-8 md:mb-12">
+                    <h2 class="text-2xl md:text-4xl font-bold mb-3 md:mb-4 font-orbitron text-green-400 neon-text">
+                        <i class="fas fa-gamepad mr-2 md:mr-3"></i> Мини игры
+                    </h2>
+                    <p class="text-sm md:text-base text-gray-400 max-w-2xl mx-auto">
+                        Быстрые и простые игры для моментального выигрыша!
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                    <!-- Wheel of Fortune -->
+                    <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-purple-900/50 hover:border-purple-500/50">
+                        <div class="flex justify-center mb-4 md:mb-6">
+                            <div class="text-5xl md:text-6xl text-purple-400">
+                                <i class="fas fa-life-ring"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Колесо фортуны</h3>
+                        <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
+                            Крути колесо для мгновенных призов
+                        </p>
+                        <button id="wheelBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-500 text-white font-semibold neon-button">
+                            Крутить
+                        </button>
+                    </div>
+
+                    <!-- Dice -->
+                    <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-yellow-900/50 hover:border-yellow-500/50">
+                        <div class="flex justify-center mb-4 md:mb-6">
+                            <div class="text-5xl md:text-6xl text-yellow-400">
+                                <i class="fas fa-dice"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Кости</h3>
+                        <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
+                            Бросай кости и выигрывай по-крупному
+                        </p>
+                        <button id="diceBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-yellow-600 to-amber-500 text-gray-900 font-semibold neon-button">
+                            Бросить
+                        </button>
+                    </div>
+
+                    <!-- Lottery -->
+                    <div class="game-card bg-gray-900 rounded-xl p-4 md:p-6 neon-box border border-blue-900/50 hover:border-blue-500/50">
+                        <div class="flex justify-center mb-4 md:mb-6">
+                            <div class="text-5xl md:text-6xl text-blue-400">
+                                <i class="fas fa-ticket-alt"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold mb-2 text-center">Лотерея</h3>
+                        <p class="text-sm md:text-base text-gray-400 mb-4 md:mb-6 text-center">
+                            Почеши билет и выиграй приз
+                        </p>
+                        <button id="lotteryBtn" class="w-full py-2 md:py-3 rounded-lg bg-gradient-to-r from-blue-600 to-sky-500 text-white font-semibold neon-button">
+                            Играть
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 border-t border-gray-800 py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <div class="text-3xl text-yellow-400">
+                            <i class="fas fa-dragon"></i>
+                        </div>
+                        <h3 class="font-orbitron text-xl font-bold bg-gradient-to-r from-purple-500 to-yellow-500 bg-clip-text text-transparent">
+                            ЯжНаДэп
+                        </h3>
+                    </div>
+                    <p class="text-gray-400">
+                        Лучшее казино для тех, кто любит рисковать! Наверное ;)
+                    </p>
+                </div>
+
+                <div>
+                    <h4 class="text-lg font-semibold text-white mb-4">Игры</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#slots" class="text-gray-400 hover:text-purple-400 transition">Слоты</a></li>
+                        <li><a href="#table" class="text-gray-400 hover:text-blue-400 transition">Настолки</a></li>
+                        <li><a href="#mini" class="text-gray-400 hover:text-green-400 transition">Мини игры</a></li>
+                    </ul>
+                </div>
+
+
+                <div>
+                    <h4 class="text-lg font-semibold text-white mb-4">Контакты</h4>
+                    <div class="flex space-x-4 mb-4">
+                      <div class="flex space-x-4 mb-4">
+                          <a href="https://t.me/your_telegram_link" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-blue-400 hover:bg-blue-900 transition">
+                              <i class="fab fa-telegram-plane"></i>
+                          </a>
+                      </div>
+                    <p class="text-gray-500 text-sm">
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>
